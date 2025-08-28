@@ -1,0 +1,17 @@
+{
+  "instance_id": "",
+  "sh_client_id": "4b93da34-570a-4142-ad4a-0e05f2d85d50",
+  "sh_client_secret": "bPJ0pOsz7ERs9EPCjoDRRPEnnuZY2VlN",
+  "bbox":  [90.483141,23.538652,90.588112,23.592700],
+  "time_interval": ["2024-07-28", "2025-07-28"],
+  "max_cloud_coverage": 20,
+  "resolution": 10,
+  "output_format": "jpg",
+  "download_folder": "downloads",
+  "analysis_settings": {
+    "pre_date": "2024-10-22",
+    "post_date": "2025-05-10", 
+    "downloads_base_path": "G:\\AgileCrafts\\Satelite Image\\downloads",
+    "wadownloads_base_path": "G:\\AgileCrafts\\Satelite Image\\wadownloads"
+}
+}
