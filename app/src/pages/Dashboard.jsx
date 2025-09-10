@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom';
 const Dashboard = () => {
     const { Search } = Input;
     const { Header, Content, Sider } = Layout;
-    const items1 = [{
-    key: 'nav1',
+    const items1 = [
+    {
+    key: 'nav2',
     // icon: <UserOutlined />,
     label: 'About',
     
@@ -43,7 +44,7 @@ const Dashboard = () => {
       <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Logo */}
         <div className="demo-logo" style={{ color: 'white', fontWeight: 'bold' }}>
-            MyApp
+            LOGO
         </div>
 
         {/* Search bar in the center */}
@@ -59,7 +60,7 @@ const Dashboard = () => {
         <Menu
             theme="dark"
             mode="horizontal"
-            defaultSelectedKeys={['2']}
+            // defaultSelectedKeys={['nav1']}
             items={items1}
             style={{ minWidth: 200 }}
         />

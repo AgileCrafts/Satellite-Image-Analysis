@@ -1,16 +1,43 @@
-import React from 'react';
-import { Button, Checkbox, Form, Input, Typography } from 'antd';
+import React,{useState} from 'react';
+import { Button, Checkbox, Form, Input, Typography, message } from 'antd';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 
 const Register = () => {
-  const onFinish = (values) => {
-    console.log('Registration Success:', values);
-    // You can later send this to backend API
-  };
+const [loading, setLoading] = useState(false);
+const navigate = useNavigate(); 
 
+  const onFinish = async (values) => {
+    setLoading(true);
+    try {
+      // Fake API call (replace with your backend API when ready)
+      const response = await axios.post('https://jsonplaceholder.typicode.com/posts', {
+        username: values.username,
+        email: values.email,
+        password: values.password,
+      });
+
+      console.log(FormData)
+      console.log("Response:", response.data);
+
+      // Simulate success message
+      message.success('Registration successful! You can now login.');
+
+      // Redirect to dashboard
+      navigate('/');
+
+    } catch (error) {
+      console.error(error);
+      message.error('Registration failed. Try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
   const onFinishFailed = (errorInfo) => {
-    console.log('Registration Failed:', errorInfo);
+  console.log('Failed:', errorInfo);
+  message.error('Please check the form and try again!');
   };
 
   return (

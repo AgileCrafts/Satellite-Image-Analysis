@@ -1,10 +1,40 @@
-import React from 'react';
-import { Button, Checkbox, Form, Input,Typography } from 'antd';
-
+import React,{useState} from 'react';
+import { Button, Checkbox, Form, Input,Typography,message } from 'antd';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
-    const onFinish = values => {
-    console.log('Success:', values);
+      const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const onFinish = async (values) => {
+    setLoading(true);
+    try {
+      // 🔹 Send credentials to backend
+      const response = await axios.post('https://jsonplaceholder.typicode.com/posts', {
+        username: values.username,
+        password: values.password,
+      });
+
+      const token = "dummy-jwt-token-123";
+      
+      // 🔹 Extract token (adjust key if your API returns differently)
+      // const { token } = response.data;
+
+      // 🔹 Store token in localStorage
+      localStorage.setItem('authToken', token);
+
+      // 🔹 Show success message
+      message.success('Login successful!');
+
+      // 🔹 Redirect to dashboard
+      navigate('/dashboard');
+    } catch (error) {
+      console.error(error);
+      message.error('Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
   const onFinishFailed = errorInfo => {
     console.log('Failed:', errorInfo);
