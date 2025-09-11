@@ -1,141 +1,274 @@
 import React, { useEffect, useState, useRef } from "react";
-import { MapContainer, TileLayer, FeatureGroup, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet-draw";
-import "leaflet/dist/leaflet.css";
-import "leaflet-draw/dist/leaflet.draw.css";
+import Map, { useMap, NavigationControl } from "react-map-gl";
+import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import * as turf from "@turf/turf";
+import "mapbox-gl/dist/mapbox-gl.css";
+import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 
-const DrawControls = ({ onAoiChange }) => {
-  const map = useMap();
+
+// Custom Rectangle Mode
+const RectangleMode = {
+  onSetup() {
+    const rect = this.newFeature({
+      type: "Feature",
+      properties: { shape: "rectangle" },
+      geometry: {
+        type: "Polygon",
+        coordinates: [[]],
+      },
+    });
+    this.addFeature(rect);
+    this.clearSelectedFeatures();
+    this.updateUIClasses({ mouse: "add" });
+    this.setActionableState({ trash: true });
+    return { rect, startPos: null };
+  },
+
+  clickAnywhere(state, e) {
+    if (state.startPos === null) {
+      state.startPos = [e.lngLat.lng, e.lngLat.lat];
+    } else {
+      this.updateRectangle(state, [e.lngLat.lng, e.lngLat.lat]);
+      this.updateUIClasses({ mouse: "pointer" });
+      this.changeMode("simple_select", { featureIds: [state.rect.id] });
+      this.map.fire('draw.create', { features: [state.rect.toGeoJSON()] }); // Manually trigger draw.create
+    }
+    this.updateRectangle(state, [e.lngLat.lng, e.lngLat.lat]);
+  },
+
+  onMouseMove(state, e) {
+    if (state.startPos) {
+      this.updateRectangle(state, [e.lngLat.lng, e.lngLat.lat]);
+    }
+  },
+
+  updateRectangle(state, endPos) {
+    const start = state.startPos;
+    const end = endPos;
+    const minX = Math.min(start[0], end[0]);
+    const maxX = Math.max(start[0], end[0]);
+    const minY = Math.min(start[1], end[1]);
+    const maxY = Math.max(start[1], end[1]);
+    const coords = [
+      [minX, minY],
+      [maxX, minY],
+      [maxX, maxY],
+      [minX, maxY],
+      [minX, minY], // Closing point
+    ];
+    state.rect.setCoordinates([coords]);
+  },
+
+  onTap(state, e) {
+    this.clickAnywhere(state, e);
+  },
+
+  onClick(state, e) {
+    this.clickAnywhere(state, e);
+  },
+
+  toDisplayFeatures(state, geojson, display) {
+    display(geojson);
+  },
+};
+
+// Custom Circle Mode
+const CircleMode = {
+  onSetup() {
+    const circle = this.newFeature({
+      type: "Feature",
+      properties: { shape: "circle" },
+      geometry: {
+        type: "Polygon",
+        coordinates: [[]],
+      },
+    });
+    this.addFeature(circle);
+    this.clearSelectedFeatures();
+    this.updateUIClasses({ mouse: "add" });
+    this.setActionableState({ trash: true });
+    return { circle, center: null, radius: 0 };
+  },
+
+  clickAnywhere(state, e) {
+    if (state.center === null) {
+      state.center = [e.lngLat.lng, e.lngLat.lat];
+    } else {
+      this.updateCircle(state, [e.lngLat.lng, e.lngLat.lat]);
+      this.updateUIClasses({ mouse: "pointer" });
+      this.changeMode("simple_select", { featureIds: [state.circle.id] });
+      this.map.fire('draw.create', { features: [state.circle.toGeoJSON()] }); // Manually trigger draw.create
+    }
+    this.updateCircle(state, [e.lngLat.lng, e.lngLat.lat]);
+  },
+
+  onMouseMove(state, e) {
+    if (state.center) {
+      this.updateCircle(state, [e.lngLat.lng, e.lngLat.lat]);
+    }
+  },
+
+  updateCircle(state, endPos) {
+    if (!state.center) return;
+    const distance = turf.distance(state.center, endPos, { units: "meters" });
+    state.radius = distance;
+    const circleGeo = turf.circle(state.center, state.radius / 1000, {
+      steps: 64,
+      units: "kilometers",
+    });
+    state.circle.setCoordinates(circleGeo.geometry.coordinates);
+  },
+
+  onTap(state, e) {
+    this.clickAnywhere(state, e);
+  },
+
+  onClick(state, e) {
+    this.clickAnywhere(state, e);
+  },
+
+  toDisplayFeatures(state, geojson, display) {
+    display(geojson);
+  },
+};
+
+// DrawControl component
+const DrawControl = ({ position, onAoiChange, drawRef }) => {
+  const { current: map } = useMap();
 
   useEffect(() => {
     if (!map) return;
 
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-
-    const drawControl = new L.Control.Draw({
-        position: "topright",
-        draw: {
-          rectangle: {
-            shapeOptions: { color: "red" },
-            showArea: false,
-            repeatMode: false
+    const draw = new MapboxDraw({
+      displayControlsDefault: false,
+      controls: { polygon: true, line_string: true },
+      modes: {
+        ...MapboxDraw.modes,
+        draw_rectangle: RectangleMode,
+        draw_circle: CircleMode,
+      },
+      styles: [
+        {
+          id: "gl-draw-polygon-fill",
+          type: "fill",
+          paint: {
+            "fill-color": [
+              "case",
+              ["==", ["get", "shape"], "rectangle"], "red",
+              ["==", ["get", "shape"], "circle"], "green",
+              "blue",
+            ],
+            "fill-opacity": 0.3,
           },
-          polygon: { allowIntersection: false, shapeOptions: { color: "blue" } },
-          polyline: true,
-          circle: { shapeOptions: { color: "green" } },
-          circlemarker: false,
-          marker: false,
         },
-        edit: {
-          featureGroup: drawnItems,
-          remove: true,
-          edit: {
-            selectedPathOptions: {
-              maintainColor: true,
-              opacity: 0.6
-            }
-          }
+        {
+          id: "gl-draw-polygon-stroke",
+          type: "line",
+          paint: {
+            "line-color": [
+              "case",
+              ["==", ["get", "shape"], "rectangle"], "red",
+              ["==", ["get", "shape"], "circle"], "green",
+              "blue",
+            ],
+            "line-width": 2,
+          },
         },
-      });
+      ],
+    });
 
-    map.addControl(drawControl);
+    drawRef.current = draw;
+    map.addControl(draw, position);
 
-map.on(L.Draw.Event.CREATED, function (e) {
-  const layer = e.layer;
-  let geojson;
-  let finalLayer = layer; // by default add what was drawn
-
-  // 🔹 Handle rectangles (already Polygon)
-  if (layer instanceof L.Rectangle) {
-    geojson = layer.toGeoJSON();
-  }
-
-  // 🔹 Handle circles (convert to polygon)
-  else if (layer instanceof L.Circle) {
-    const latlng = layer.getLatLng();
-    const radius = layer.getRadius();
-
-    function circleToPolygon(center, radius, sides = 64) {
-      const coords = [];
-      const R = 6378137; // Earth radius in meters
-      const latRad = (center.lat * Math.PI) / 180;
-
-      for (let i = 0; i < sides; i++) {
-        const angle = (i * 2 * Math.PI) / sides;
-        const dx = radius * Math.cos(angle);
-        const dy = radius * Math.sin(angle);
-
-        const dLat = (dy / R) * (180 / Math.PI);
-        const dLng = (dx / (R * Math.cos(latRad))) * (180 / Math.PI);
-
-        coords.push([center.lat + dLat, center.lng + dLng]);
+    const updateAoi = (e) => {
+      let data = draw.getAll();
+      if (e.type === "draw.create" && data.features.length > 1) {
+        const idsToDelete = data.features.slice(0, -1).map((f) => f.id);
+        draw.delete(idsToDelete);
+        data = draw.getAll();
       }
-      coords.push(coords[0]); // close polygon
-      return coords;
+      const feature = data.features[0] || null;
+      if (feature) {
+        const shape = e.mode
+          ? e.mode.replace("draw_", "")
+          : feature.properties.shape || "polygon";
+        feature.properties = { ...feature.properties, shape };
+      }
+      onAoiChange(feature);
+    };
+
+    map.on("draw.create", updateAoi);
+    map.on("draw.update", updateAoi);
+    map.on("draw.delete", updateAoi);
+
+
+    map.on("draw.selectionchange", (e) => {
+  if (e.features.length > 0) {
+    const featureId = e.features[0].id;
+    // Show a confirm dialog
+    if (window.confirm("Delete this AOI?")) {
+      draw.delete(featureId);
+      onAoiChange(null); // update AOI state
     }
-
-    const polygonCoords = circleToPolygon(latlng, radius);
-    const polygon = L.polygon(polygonCoords, { color: "green" });
-
-    geojson = polygon.toGeoJSON();
-    finalLayer = polygon; 
   }
-
-  // 🔹 Handle everything else normally
-  else {
-    geojson = layer.toGeoJSON();
-  }
-
-  drawnItems.addLayer(finalLayer); 
-  onAoiChange(geojson);
 });
 
-
-    map.on(L.Draw.Event.EDITED, function (e) {
-      e.layers.eachLayer((layer) => {
-        onAoiChange(layer.toGeoJSON());
-      });
-    });
-
-    map.on(L.Draw.Event.DELETED, function () {
-      onAoiChange(null);
-    });
-
     return () => {
-      map.removeControl(drawControl);
-      map.removeLayer(drawnItems);
+      map.off("draw.create", updateAoi);
+      map.off("draw.update", updateAoi);
+      map.off("draw.delete", updateAoi);
+      map.removeControl(draw);
     };
-  }, [map, onAoiChange]);
+  }, [map, position, onAoiChange, drawRef]);
 
   return null;
 };
 
+// MapMover component
+const MapMover = ({ searchCoords }) => {
+  const { current: map } = useMap();
+
+  useEffect(() => {
+    if (!map || !searchCoords) return;
+    const { lat, lng } = searchCoords;
+    if (!isNaN(lat) && !isNaN(lng)) {
+      setTimeout(() => {
+        map.flyTo({ center: [lng, lat], zoom: 12, essential: true });
+        console.log("Map moved to:", { lat, lng });
+      }, 100);
+    } else {
+      console.log("Invalid coordinates:", { lat, lng });
+    }
+  }, [searchCoords, map]);
+
+  return null;
+};
 
 const MapPage = () => {
   const [aoi, setAoi] = useState(null);
   const [coords, setCoords] = useState({ lat: "", lng: "" });
-  const mapRef = useRef(null); // fix: useRef to access map instance
+  const [searchCoords, setSearchCoords] = useState(null);
+  const drawRef = useRef(null);
 
   const handleSearch = () => {
-      if (!coords.lat || !coords.lng || !mapRef.current) {
-        console.log("Invalid input or map not ready:", { lat: coords.lat, lng: coords.lng, mapRef: mapRef.current });
-        return;
-      }
-      const lat = parseFloat(coords.lat.trim());
-      const lng = parseFloat(coords.lng.trim());
-      if (!isNaN(lat) && !isNaN(lng)) {
-        mapRef.current.setView([lat, lng], 14);
-        console.log("Map moved to:", { lat, lng });
-      } else {
-        console.log("Invalid coordinates:", { lat, lng });
-      }
+    const lat = parseFloat(coords.lat.trim());
+    const lng = parseFloat(coords.lng.trim());
+    if (isNaN(lat) || isNaN(lng)) {
+      console.log("Invalid coordinates:", coords);
+      return;
+    }
+    setSearchCoords({ lat, lng });
+  };
 
+  //Custom AOI buttons in separate container
+  const handleDrawMode = (mode) => {
+    if (drawRef.current) {
+      drawRef.current.changeMode(mode);
+    }
   };
 
   return (
-    <div style={{ height: "100vh", width: "100vw" }}>
+    <div style={{ height: "100vh", width: "100vw", position: "relative" }}>
       {/* Search Bar */}
       <div
         style={{
@@ -166,22 +299,70 @@ const MapPage = () => {
         <button onClick={handleSearch}>Go</button>
       </div>
 
-      <MapContainer
-        center={[23.5657, 90.5356]}
-        zoom={12}
-        style={{ height: "100%", width: "100%" }}
-        whenCreated={(mapInstance) => (mapRef.current = mapInstance)}
+      <Map
+        id="myMap"
+        initialViewState={{
+          latitude: 23.5657,
+          longitude: 90.5356,
+          zoom: 12,
+        }}
+        style={{ width: "100%", height: "100%" }}
+        mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+        mapboxAccessToken="pk.eyJ1IjoicnViYXlldHJhaXNhIiwiYSI6ImNtZmYxNjVyNzBkY3cya29hd3JwcHgxem8ifQ.9EWRZl8FOkbvcz5aVBDOpg"
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
-        <FeatureGroup>
-          <DrawControls onAoiChange={setAoi} />
-        </FeatureGroup>
-      </MapContainer>
+        <DrawControl position="top-right" onAoiChange={setAoi} drawRef={drawRef} />
+        <MapMover searchCoords={searchCoords} />
+        <NavigationControl position="top-left" />
+      </Map>
 
-      {/* AOI GeoJSON display & save */}
+      {/* Custom Draw Buttons */}
+      <div
+  style={{
+    position: "absolute",
+    top: 80, // just below the draw/nav controls
+    right: 10,
+    zIndex: 1000,
+  }}
+>
+          <div className="mapboxgl-ctrl mapboxgl-ctrl-group">
+            <button
+              className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_rectangle"
+              title="Draw rectangle"
+              onClick={() => handleDrawMode("draw_rectangle")}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="12"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+            <button
+              className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_circle"
+              title="Draw circle"
+              onClick={() => handleDrawMode("draw_circle")}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="8"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+
+      {/* AOI display */}
       <div
         style={{
           position: "absolute",
@@ -192,7 +373,8 @@ const MapPage = () => {
           padding: "10px",
           borderRadius: "8px",
           maxWidth: "400px",
-          overflowWrap: "break-word",
+          maxHeight: "400px",
+          overflowY: "auto",
         }}
       >
         <h4>AOI GeoJSON:</h4>
@@ -209,7 +391,6 @@ const MapPage = () => {
               a.click();
               URL.revokeObjectURL(url);
             }}
-            style={{ marginTop: "10px", padding: "5px 10px" }}
           >
             Save AOI
           </button>

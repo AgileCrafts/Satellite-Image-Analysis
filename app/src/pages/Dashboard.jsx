@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 const Dashboard = () => {
     const { Search } = Input;
     const { Header, Content, Sider } = Layout;
+    const navigate = useNavigate();
+
     const items1 = [
     {
     key: 'nav2',
@@ -23,11 +25,11 @@ const Dashboard = () => {
     } ,
 
     {
-    key: 'sub2',
+    key: '/map',
     // icon: <UserOutlined />,
     label: 'Map',
     children: [
-      { key: '1', label: 'opt1' },
+      { key: '/map/view', label: 'View' },
       { key: '2', label: 'opt2' },
       { key: '3', label: 'opt3' },
     ],
@@ -41,6 +43,7 @@ const Dashboard = () => {
 
   return (
     <Layout className='dashboard'>
+
       <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Logo */}
         <div className="demo-logo" style={{ color: 'white', fontWeight: 'bold' }}>
@@ -74,6 +77,7 @@ const Dashboard = () => {
             defaultOpenKeys={['sub1']}
             style={{ height: '100%', borderInlineEnd: 0 }}
             items={items2}
+            onClick={(e) => navigate(e.key)}
           />
         </Sider>
         <Layout style={{ padding: '0 24px 24px' }}>

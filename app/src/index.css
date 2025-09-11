@@ -32,3 +32,16 @@ body{
   min-height: 100vh;
   min-width: 100vw;
 }
+/* .mapbox-gl-draw_rectangle {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect width="14" height="10" x="3" y="5" stroke="black" fill="none" stroke-width="2"/></svg>');
+  background-size: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.mapbox-gl-draw_circle {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke="black" fill="none" stroke-width="2"/></svg>');
+  background-size: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+} */
