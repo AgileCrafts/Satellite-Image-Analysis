@@ -4,15 +4,20 @@ import Login from './pages/Login';
 import MapPage from './pages/MapPage';
 import Dashboard from './pages/Dashboard';
 import Register from './pages/Register';
+import MainLayout from './pages/MainLayout';
+import ChangeMap from './pages/ChangeMap'
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/map/view" element={<MapPage />} />
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/map/view" element={<MapPage />} />
+          <Route path="/map/changemap" element={<ChangeMap />} />
+        </Route>
       </Routes>
     </Router>
   );

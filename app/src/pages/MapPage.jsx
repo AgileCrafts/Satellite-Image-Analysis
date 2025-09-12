@@ -134,6 +134,8 @@ const CircleMode = {
 
 // DrawControl component
 const DrawControl = ({ position, onAoiChange, drawRef }) => {
+  const [selectedFeatureId, setSelectedFeatureId] = useState(null);
+  const [buttonPosition, setButtonPosition] = useState(null);
   const { current: map } = useMap();
 
   useEffect(() => {
@@ -177,6 +179,8 @@ const DrawControl = ({ position, onAoiChange, drawRef }) => {
       ],
     });
 
+    
+
     drawRef.current = draw;
     map.addControl(draw, position);
 
@@ -203,23 +207,96 @@ const DrawControl = ({ position, onAoiChange, drawRef }) => {
 
 
     map.on("draw.selectionchange", (e) => {
-  if (e.features.length > 0) {
-    const featureId = e.features[0].id;
-    // Show a confirm dialog
-    if (window.confirm("Delete this AOI?")) {
-      draw.delete(featureId);
-      onAoiChange(null); // update AOI state
+    if (e.features.length > 0) {
+      const feature = e.features[0];
+      setSelectedFeatureId(feature.id);
+
+
+      // Get bounding box of the feature
+      const [minX, minY, maxX, maxY] = turf.bbox(feature);
+
+      // Choose the top-right corner (maxX, maxY)
+      const corner = [maxX, maxY];
+
+      // Convert map coords → screen pixels
+      const pixel = map.project(corner);
+      setButtonPosition({ x: pixel.x, y: pixel.y });
+    } else {
+      setSelectedFeatureId(null);
+      setButtonPosition(null);
     }
-  }
-});
+  
+  });
+
+  map.on("move", () => {
+    if (selectedFeatureId) {
+      const feature = drawRef.current.get(selectedFeatureId);
+      if (feature) {
+        const [minX, minY, maxX, maxY] = turf.bbox(feature);
+        const corner = [maxX, maxY];
+        const pixel = map.project(corner);
+        setButtonPosition({ x: pixel.x, y: pixel.y });
+      }
+    }
+    });
+
 
     return () => {
-      map.off("draw.create", updateAoi);
-      map.off("draw.update", updateAoi);
-      map.off("draw.delete", updateAoi);
-      map.removeControl(draw);
+      console.log("DrawControl: Cleaning up, map exists:", !!map, "draw exists:", !!drawRef.current);
+      try {
+        if (map) {
+          console.log("DrawControl: Removing event listeners");
+          map.off("draw.create", updateAoi);
+          map.off("draw.update", updateAoi);
+          map.off("draw.delete", updateAoi);
+          map.off("draw.selectionchange");
+          map.off("move");
+          if (drawRef.current) {
+            console.log("DrawControl: Removing draw control");
+            map.removeControl(drawRef.current);
+          }
+        }
+      } catch (error) {
+        console.error("DrawControl: Cleanup error:", error);
+      }
+      drawRef.current = null; // Clear ref to prevent stale references
     };
   }, [map, position, onAoiChange, drawRef]);
+
+
+
+  return (
+  <>
+    {selectedFeatureId && buttonPosition && (
+      <button
+      style={{
+        position: "absolute",
+        left: `${buttonPosition.x}px`,
+        top: `${buttonPosition.y}px`,
+        transform: "translate(10%, -50%)", // shift to the side
+        zIndex: 1000,
+        padding: "2px 6px",
+        background: "red",
+        color: "white",
+        border: "none",
+        borderRadius: "4px",
+        cursor: "pointer",
+        fontSize: "12px"
+      }}
+      onClick={() => {
+        if (window.confirm("Delete this AOI?")) {
+          drawRef.current?.delete(selectedFeatureId);
+          setSelectedFeatureId(null);
+          setButtonPosition(null);
+          onAoiChange(null);
+        }
+      }}
+    >
+      ✖
+    </button>
+    )}
+  </>
+);
 
   return null;
 };
@@ -268,7 +345,7 @@ const MapPage = () => {
   };
 
   return (
-    <div style={{ height: "100vh", width: "100vw", position: "relative" }}>
+    <div style={{ height: "100%", width: "100%", position: "relative" }}>
       {/* Search Bar */}
       <div
         style={{
@@ -317,11 +394,12 @@ const MapPage = () => {
 
       {/* Custom Draw Buttons */}
       <div
-  style={{
-    position: "absolute",
-    top: 80, // just below the draw/nav controls
-    right: 10,
-    zIndex: 1000,
+        style={{
+          position: "absolute",
+          top: 68, // just below the draw/nav controls
+          right: 10,
+          zIndex: 1000,
+          border:0
   }}
 >
           <div className="mapboxgl-ctrl mapboxgl-ctrl-group">

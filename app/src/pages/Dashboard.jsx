@@ -1,106 +1,69 @@
-import React from 'react';
-import { Breadcrumb, Layout, Menu, theme, Input } from 'antd';
-import { UserOutlined, LaptopOutlined, NotificationOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+// Dashboard.jsx
+import React ,{useState , useEffect} from "react";
+import { Card, Row, Col , List, Spin } from "antd";
 
-const Dashboard = () => {
-    const { Search } = Input;
-    const { Header, Content, Sider } = Layout;
-    const navigate = useNavigate();
+function Dashboard() {
 
-    const items1 = [
-    {
-    key: 'nav2',
-    // icon: <UserOutlined />,
-    label: 'About',
-    
+  const [activity, setActivity] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+
+   useEffect(() => {
+    async function fetchData() {
+      try {
+        const [activityRes, notificationsRes] = await Promise.all([
+          fetch("http://127.0.0.1:8000/activity"),
+          fetch("http://127.0.0.1:8000/notifications"),
+        ]);
+
+        const activityData = await activityRes.json();
+        const notificationsData = await notificationsRes.json();
+
+        setActivity(activityData.logs || []);
+        setNotifications(notificationsData.messages || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
     }
-    ];
-    const items2 = [
-    {
-    key: 'sub1',
-    // icon: <UserOutlined />,
-    label: 'Dashboard',
-    
-    } ,
 
-    {
-    key: '/map',
-    // icon: <UserOutlined />,
-    label: 'Map',
-    children: [
-      { key: '/map/view', label: 'View' },
-      { key: '2', label: 'opt2' },
-      { key: '3', label: 'opt3' },
-    ],
-    } 
-    ];
-    const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
-
-
+    fetchData();
+  }, []);
 
   return (
-    <Layout className='dashboard'>
+    <div>
+      <Row gutter={[16, 16]} style={{ marginTop: "24px" }}>
+        <Col span={12}>
+          <Card title="Recent Activity">
+            {loading ? (
+              <Spin />
+            ) : (
+              <List
+                dataSource={activity}
+                renderItem={(item) => <List.Item>{item}</List.Item>}
+              />
+            )}
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title="Notifications">
 
-      <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Logo */}
-        <div className="demo-logo" style={{ color: 'white', fontWeight: 'bold' }}>
-            LOGO
-        </div>
+            {loading ? (
+              <Spin />
+            ) : (
+              <List
+                dataSource={notifications}
+                renderItem={(item) => <List.Item>{item}</List.Item>}
+              />
+            )}
 
-        {/* Search bar in the center */}
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <Search
-            placeholder="Search..."
-            onSearch={value => console.log(value)}
-            style={{ maxWidth: 400 }}
-            />
-        </div>
-
-        {/* Menu aligned to the right */}
-        <Menu
-            theme="dark"
-            mode="horizontal"
-            // defaultSelectedKeys={['nav1']}
-            items={items1}
-            style={{ minWidth: 200 }}
-        />
-        </Header>
-
-      <Layout>
-        <Sider width={200} style={{ background: colorBgContainer }}>
-          <Menu
-            mode="inline"
-            defaultSelectedKeys={['1']}
-            defaultOpenKeys={['sub1']}
-            style={{ height: '100%', borderInlineEnd: 0 }}
-            items={items2}
-            onClick={(e) => navigate(e.key)}
-          />
-        </Sider>
-        <Layout style={{ padding: '0 24px 24px' }}>
-          {/* <Breadcrumb
-            items={[{ title: 'Home' }, { title: 'List' }, { title: 'App' }]}
-            style={{ margin: '16px 0' }}
-          /> */}
-          <Content
-            style={{
-              padding: 24,
-              margin: 0,
-              minHeight: 280,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-            }}
-          >
-            Content
-          </Content>
-        </Layout>
-      </Layout>
-    </Layout>
+          </Card>
+        </Col>
+      </Row>
+    </div>
   );
-
-};
+}
 
 export default Dashboard;
