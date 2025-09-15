@@ -13,7 +13,7 @@ const navigate = useNavigate();
     setLoading(true);
     try {
       // Fake API call (replace with your backend API when ready)
-      const response = await axios.post('https://jsonplaceholder.typicode.com/posts', {
+      const response = await axios.post('http://127.0.0.1:8000/register', {
         username: values.username,
         email: values.email,
         password: values.password,
@@ -23,7 +23,7 @@ const navigate = useNavigate();
       console.log("Response:", response.data);
 
       // Simulate success message
-      message.success('Registration successful! You can now login.');
+      message.success('Registration successful! You can now login.',3);
 
       // Redirect to dashboard
       navigate('/');
@@ -31,6 +31,13 @@ const navigate = useNavigate();
     } catch (error) {
       console.error(error);
       message.error('Registration failed. Try again later.');
+
+      if (error.response?.data?.detail) {
+      message.error(error.response.data.detail); // show backend validation error
+    } else {
+      message.error("Registration failed. Try again later.");
+    }
+
     } finally {
       setLoading(false);
     }

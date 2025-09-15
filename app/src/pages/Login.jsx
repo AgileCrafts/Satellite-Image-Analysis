@@ -1,34 +1,36 @@
 import React,{useState} from 'react';
-import { Button, Checkbox, Form, Input,Typography,message } from 'antd';
+import { Button, Checkbox, Form, Input,Typography,Space, message } from 'antd';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 function Login() {
       const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [messageApi, contextHolder] = message.useMessage();
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
       // 🔹 Send credentials to backend
-      const response = await axios.post('https://jsonplaceholder.typicode.com/posts', {
+      const response = await axios.post('http://127.0.0.1:8000/login', {
         username: values.username,
         password: values.password,
       });
 
-      const token = "dummy-jwt-token-123";
+      // const token = "dummy-jwt-token-123";
       
       // 🔹 Extract token (adjust key if your API returns differently)
-      // const { token } = response.data;
+      const { token } = response.data;
 
       // 🔹 Store token in localStorage
       localStorage.setItem('authToken', token);
 
       // 🔹 Show success message
-      message.success('Login successful!');
+      message.success('Login successful!',3);
 
       // 🔹 Redirect to dashboard
       navigate('/dashboard');
+
     } catch (error) {
       console.error(error);
       message.error('Login failed. Please check your credentials.');
@@ -41,8 +43,10 @@ function Login() {
   }
   const { Title } = Typography;
   return (
-    
+      
+
     <div className='login'>
+      
       <Title level={2} style={{ textAlign: 'center', marginBottom: 20 }}>
         Login
       </Title>
