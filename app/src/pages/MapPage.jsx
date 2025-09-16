@@ -1,9 +1,14 @@
+
+import '@ant-design/v5-patch-for-react-19';
+import { message } from 'antd';
+
 import React, { useEffect, useState, useRef } from "react";
 import Map, { useMap, NavigationControl } from "react-map-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import * as turf from "@turf/turf";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
+
 
 
 // Custom Rectangle Mode
@@ -458,6 +463,7 @@ const MapPage = () => {
         <h4>AOI GeoJSON:</h4>
         <pre>{aoi ? JSON.stringify(aoi, null, 2) : "No AOI selected"}</pre>
         {aoi && (
+        <>
           <button
             onClick={() => {
               const geojsonStr = JSON.stringify(aoi, null, 2);
@@ -470,8 +476,33 @@ const MapPage = () => {
               URL.revokeObjectURL(url);
             }}
           >
-            Save AOI
+            Download AOI
           </button>
+
+          {/* Save to backend button */}
+            <button
+            onClick={async () => {
+              try {
+                const response = await fetch("http://localhost:8000/aoi", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(aoi),   
+                });
+
+                if (!response.ok) throw new Error("Failed to save AOI");
+
+                const data = await response.json();
+                console.log("AOI saved:", data);
+                message.success("AOI saved successfully");
+              } catch (err) {
+                console.error(err);
+                message.error("Failed to save")
+              }
+            }}
+          >
+            Save
+          </button>
+      </>
         )}
       </div>
     </div>

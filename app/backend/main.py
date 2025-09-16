@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pydantic import EmailStr
@@ -8,6 +8,11 @@ from sqlalchemy.orm import sessionmaker, Session
 from passlib.context import CryptContext
 import jwt
 import datetime
+from sqlalchemy import JSON
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import from_shape
+from shapely.geometry import shape
+
 
 # Database setup
 DATABASE_URL = "postgresql://postgres:12345@localhost/SatelliteDB"
@@ -39,10 +44,18 @@ class RegisterRequest(BaseModel):
     username: str
     email: EmailStr
     password: str
+    
+class AOI(Base):
+    __tablename__ = "aois"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=True)  # optional label
+    geojson = Column(JSON, nullable=False)  # optional: keep GeoJSON
+    geom = Column(Geometry("POLYGON", srid=4326), nullable=True)  # PostGIS geometry 
+
 
 app = FastAPI()
 
-# ✅ Allow frontend to talk to backend
+#Allow frontend to talk to backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # React dev server
@@ -115,3 +128,33 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
     return {"message": "User registered successfully", "user_id": new_user.id}
 
+@app.post("/aoi")
+def save_aoi(aoi: dict = Body(...), db: Session = Depends(get_db)):
+    try:
+        # Extract geometry from Feature or FeatureCollection
+        if aoi.get("type") == "FeatureCollection":
+            geom = aoi["features"][0]["geometry"]
+        elif aoi.get("type") == "Feature":
+            geom = aoi["geometry"]
+        else:
+            geom = aoi
+
+        # Validate with shapely
+        geom_shape = shape(geom)
+
+        # Save both GeoJSON + PostGIS geometry
+        new_aoi = AOI(
+            name=aoi.get("properties", {}).get("shape", "AOI"),  # optional label
+            geojson=aoi,  # keep full feature JSON
+            geom=from_shape(geom_shape, srid=4326)  # proper PostGIS geometry
+        )
+
+        db.add(new_aoi)
+        db.commit()
+        db.refresh(new_aoi)
+
+        return {"message": "AOI saved successfully", "aoi_id": new_aoi.id}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))

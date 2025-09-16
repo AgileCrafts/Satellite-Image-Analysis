@@ -1,3 +1,4 @@
+import '@ant-design/v5-patch-for-react-19';
 import React,{useState} from 'react';
 import { Button, Checkbox, Form, Input,Typography,Space, message } from 'antd';
 import axios from 'axios';
