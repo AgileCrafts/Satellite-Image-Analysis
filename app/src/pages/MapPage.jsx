@@ -480,28 +480,40 @@ const MapPage = () => {
           </button>
 
           {/* Save to backend button */}
-            <button
-            onClick={async () => {
-              try {
-                const response = await fetch("http://localhost:8000/aoi", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(aoi),   
-                });
-
-                if (!response.ok) throw new Error("Failed to save AOI");
-
-                const data = await response.json();
-                console.log("AOI saved:", data);
-                message.success("AOI saved successfully");
-              } catch (err) {
-                console.error(err);
-                message.error("Failed to save")
+        <button
+          onClick={async () => {
+            try {
+              const token = localStorage.getItem("authToken");
+              if (!token) {
+                message.error("No auth token found. Please log in.");
+                return;
               }
-            }}
-          >
-            Save
-          </button>
+
+              const response = await fetch("http://localhost:8000/aoi", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`, // Add authentication header
+                },
+                body: JSON.stringify(aoi),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "Failed to save AOI");
+              }
+
+              const data = await response.json();
+              console.log("AOI saved:", data);
+              message.success(`AOI saved successfully! AOI ID: ${data.aoi_id}`);
+            } catch (err) {
+              console.error(err);
+              message.error(err.message || "Failed to save AOI");
+            }
+          }}
+        >
+          Save
+        </button>
       </>
         )}
       </div>
