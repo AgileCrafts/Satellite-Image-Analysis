@@ -29,7 +29,7 @@ const MainLayout = () => {
       children: [
         { key: "/map/view", label: "View" },
         { key: "/map/changemap", label: "Change Map" },
-        { key: "3", label: "Opt 3" },
+        
       ],
     },
   ];

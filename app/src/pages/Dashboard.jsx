@@ -1,69 +1,53 @@
 // Dashboard.jsx
-import React ,{useState , useEffect} from "react";
-import { Card, Row, Col , List, Spin } from "antd";
+import React, { useEffect, useState } from "react";
+import { Card, Row, Col, Spin } from "antd";
 
-function Dashboard() {
+const Dashboard = () => {
+  const [data, setData] = useState(null);
 
-  const [activity, setActivity] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-
-   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [activityRes, notificationsRes] = await Promise.all([
-          fetch("http://127.0.0.1:8000/activity"),
-          fetch("http://127.0.0.1:8000/notifications"),
-        ]);
-
-        const activityData = await activityRes.json();
-        const notificationsData = await notificationsRes.json();
-
-        setActivity(activityData.logs || []);
-        setNotifications(notificationsData.messages || []);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
+  useEffect(() => {
+    fetch("http://localhost:8000/dashboard")
+      .then((res) => res.json())
+      .then((res) => setData(res));
   }, []);
 
+  if (!data) return <Spin size="large" />;
+
   return (
-    <div>
-      <Row gutter={[16, 16]} style={{ marginTop: "24px" }}>
-        <Col span={12}>
-          <Card title="Recent Activity">
-            {loading ? (
-              <Spin />
-            ) : (
-              <List
-                dataSource={activity}
-                renderItem={(item) => <List.Item>{item}</List.Item>}
-              />
-            )}
+    <div style={{ padding: 10 }}>
+      {/* Banner / Hero Section */}
+      <Card
+        style={{
+          marginBottom: 10,
+          textAlign: "center",
+          background: "#e7edf4ff",
+          borderRadius: 1,
+        }}
+      >
+        <h2>Welcome to the Change Map Dashboard!</h2>
+        <h4>Quick summary of your AOIs and analyses</h4>
+      </Card>
+
+      {/* Stats Cards */}
+      <Row gutter={24}>
+        <Col span={8}>
+          <Card title="Total AOIs" varient="borderless" className="floating-card" style={{ textAlign: "center" }}>
+            <h4>{data.total_aois}</h4>
           </Card>
         </Col>
-        <Col span={12}>
-          <Card title="Notifications">
-
-            {loading ? (
-              <Spin />
-            ) : (
-              <List
-                dataSource={notifications}
-                renderItem={(item) => <List.Item>{item}</List.Item>}
-              />
-            )}
-
+        <Col span={8}>
+          <Card title="Total Change Maps" varient="borderless" className="floating-card" style={{ textAlign: "center" }}>
+            <h4>{data.total_change_maps}</h4>
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card title="Last Analysis Date" varient="borderless" className="floating-card" style={{ textAlign: "center" }}>
+            <h4>{data.last_analysis_date}</h4>
           </Card>
         </Col>
       </Row>
     </div>
   );
-}
+};
 
 export default Dashboard;

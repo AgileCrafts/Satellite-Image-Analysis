@@ -12,6 +12,8 @@ function ChangeMap() {
   const [aois, setAois] = useState([]);      // list of AOIs from backend
   const [selectedAoi, setSelectedAoi] = useState(""); // selected AOI id
   const [selectedDates, setSelectedDates] = useState(null);
+  const [waterImg, setWaterImg] = useState(null);
+  const [collageImg, setCollageImg] = useState(null);
 
   // Fetch AOIs from backend on component mount
     useEffect(() => {
@@ -45,6 +47,29 @@ function ChangeMap() {
     fetchAois();
   }, []);
 
+  // useEffect(() => {
+  //   const fetchAois = () => {
+  //     const token = localStorage.getItem("authToken");
+  //     if (!token) {
+  //       console.error("No auth token found in localStorage");
+  //       setAois([]);
+  //       return;
+  //     }
+
+  //     axios.get("http://127.0.0.1:8000/aois", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     })
+  //     .then((res) => {
+  //       setAois(res.data);  // Assuming the response has an array of AOIs
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching AOIs:", error);
+  //       setAois([]);  // Or handle the error appropriately
+  //     });
+  //   };
+
+  //   fetchAois();
+  // }, []);
 
   const saveDates = () => {
   if (!fromDate || !toDate) {
@@ -83,6 +108,23 @@ fetch("http://localhost:8000/change_maps", {
     .then((data) => {
       message.success(`Selection saved! Change Map ID: ${data.change_map_id}`);
       console.log(data);
+
+
+      // Fetch water_analysis_image
+      fetch(`http://localhost:8000/change_maps/${data.change_map_id}/water_analysis_image`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then((res) => res.blob())
+        .then((blob) => setWaterImg(URL.createObjectURL(blob)));
+
+      // Fetch collage_image
+      fetch(`http://localhost:8000/change_maps/${data.change_map_id}/collage_image`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then((res) => res.blob())
+        .then((blob) => setCollageImg(URL.createObjectURL(blob)));
+
+
     })
     .catch((err) => message.error(err.message));
 
@@ -140,17 +182,30 @@ fetch("http://localhost:8000/change_maps", {
           </option>
           {aois.map((aoi) => (
             <option key={aoi.id} value={aoi.id}>
-              {`${aoi.label} - Centroid: (${aoi.centroid ? `${aoi.centroid.lat.toFixed(3)}, ${aoi.centroid.lon.toFixed(3)}` : 'N/A'})`}
+              {`${aoi.label}`}
             </option>
           ))}
         </select>
       </div>
 
       <button className="save-btn" style={{ marginTop: "20px" }} onClick={saveDates}>
-        Save Dates & AOI
+        Save & View Details
       </button>
 
-      
+      {waterImg && (
+        <div className="image"style={{ marginTop: "20px" }}>
+          <h3>Water Analysis Image</h3>
+          <img src={waterImg} alt="Water Analysis" style={{ width: "900px", height:"400px", border: "1px solid #ccc" }} />
+        </div>
+      )}
+
+      {collageImg && (
+        <div className="image" style={{ marginTop: "20px" }}>
+          <h3>Collage Image</h3>
+          <img src={collageImg} alt="Collage" style={{ width: "1100px", height:"300px",  border: "1px solid #ccc" }} />
+        </div>
+      )}
+
 
     </div>
     

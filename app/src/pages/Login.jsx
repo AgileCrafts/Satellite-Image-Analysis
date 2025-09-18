@@ -45,8 +45,8 @@ function Login() {
   const { Title } = Typography;
   return (
       
-
-    <div className='login'>
+  <div className="log-body">
+  <div className='login'>
       
       <Title level={2} style={{ textAlign: 'center', marginBottom: 20 }}>
         Login
@@ -99,6 +99,7 @@ function Login() {
 
       </Form>
     </div>
+   </div>
   );
 }
 

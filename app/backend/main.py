@@ -1,26 +1,23 @@
 from fastapi import FastAPI, Depends, HTTPException, Body
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from pydantic import EmailStr
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Text, DateTime, LargeBinary
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session,relationship
+from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 import jwt
 import datetime
-from sqlalchemy import JSON
-from geoalchemy2 import Geometry
-from geoalchemy2.shape import from_shape
 from shapely.geometry import shape
+from downloader.image_downloader import download_change_map_images, load_config
+from database import get_db
+from models import User, AOI, ChangeMap
+from schemas import LoginRequest, RegisterRequest, ChangeMapCreate
+from geoalchemy2.shape import from_shape
+import asyncio
+from water_analysis import run_water_analysis
+from fastapi.responses import StreamingResponse
+from io import BytesIO
 
 
 
-# Database setup
-DATABASE_URL = "postgresql://postgres:12345@localhost/SatelliteDB"
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
-Base = declarative_base()
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -29,67 +26,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "supersecretkey"
 ALGORITHM = "HS256"
 
-
-# Models
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
-
-class AOI(Base):
-    __tablename__ = "aois"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    name = Column(String, nullable=True)  # optional label
-    geojson = Column(JSON, nullable=False)  # optional: keep GeoJSON
-    geom = Column(Geometry("POLYGON", srid=4326), nullable=True)  # PostGIS geometry 
-
-class Image(Base):
-    __tablename__ = "images"
-    id = Column(Integer, primary_key=True, index=True)
-    aoiId = Column(Integer)
-    image_date = Column(Date)
-    ndwi_data = Column(LargeBinary, nullable=True)  # Changed to LargeBinary for bytea
-    rgb_data = Column(LargeBinary, nullable=True)  # Changed to LargeBinary for bytea
-    meta_data = Column(LargeBinary, nullable=True)  # Changed to LargeBinary for bytea
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
-    
-class ChangeMap(Base):
-    __tablename__ = "change_maps"
-
-    id = Column(Integer, primary_key=True, index=True)
-    aoi_id = Column(Integer, ForeignKey("aois.id", ondelete="CASCADE"), nullable=False)
-    pre_image_id = Column(Integer, ForeignKey("images.id", ondelete="CASCADE"), nullable=True)
-    post_image_id = Column(Integer, ForeignKey("images.id", ondelete="CASCADE"), nullable=True)
-    map_data = Column(LargeBinary, nullable=True)
-    from_date = Column(Date, nullable=False)
-    to_date = Column(Date, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
-    # relationships if needed
-    aoi = relationship("AOI")
-    pre_image = relationship("Image", foreign_keys=[pre_image_id])
-    post_image = relationship("Image", foreign_keys=[post_image_id])
-    
-
-# Pydantic schema
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-    
-class RegisterRequest(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-    
-class ChangeMapCreate(BaseModel):
-    aoi_id: int
-    from_date: str
-    to_date: str
-    
 
 
 
@@ -103,15 +39,34 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-        
 
+        
+# Simulating a long-running task
+async def long_running_task():
+    try:
+        await asyncio.sleep(10)  # Simulate a long-running async task
+    except asyncio.CancelledError:
+        print("Long-running task was cancelled.")
+        raise
+
+@app.on_event("startup")
+async def startup():
+    print("Starting server...")
+    # Start a long-running task in the background
+    app.state.task = asyncio.create_task(long_running_task())
+
+@app.on_event("shutdown")
+async def shutdown():
+    print("Shutting down gracefully...")
+    # Cancel the long-running task
+    app.state.task.cancel()
+    try:
+        # Wait for the task to finish or be cancelled
+        await app.state.task
+    except asyncio.CancelledError:
+        print("Task cancelled successfully.")
+    
+    print("Server shutdown complete.")
       
 @app.get("/")
 def read_root():
@@ -240,6 +195,9 @@ def save_change_map_selection(data: ChangeMapCreate, db: Session = Depends(get_d
     db.add(new_map)
     db.commit()
     db.refresh(new_map)
+    
+    download_change_map_images(new_map.id)
+    run_water_analysis(new_map.id)
 
     return {"message": "Change map selection saved", "change_map_id": new_map.id}
 
@@ -253,9 +211,10 @@ def get_user_aois(db: Session = Depends(get_db), current_user: "User" = Depends(
     result = []
 
     for aoi in aois:
-        if aoi.name:
-            label = aoi.name
-        elif aoi.geojson:
+        # if aoi.name:
+        #     label = aoi.name
+        # el
+        if aoi.geojson:
             geom = aoi.geojson.get("geometry") or (
                 aoi.geojson.get("features")[0].get("geometry")
                 if "features" in aoi.geojson else None
@@ -267,13 +226,13 @@ def get_user_aois(db: Session = Depends(get_db), current_user: "User" = Depends(
                 lons = [c[0] for c in coords]
                 latCentroid = (min(lats) + max(lats)) / 2
                 lonCentroid = (min(lons) + max(lons)) / 2
-                label = f"AOI #{aoi.id} (Lat {latCentroid:.3f}, Lon {lonCentroid:.3f})"               
+                label = f"AOI:{aoi.name} (Lat {latCentroid:.3f}, Lon {lonCentroid:.3f})"               
             else:
-                label = f"AOI #{aoi.id}"
+                label = f"AOI {aoi.name}"
                 
                 
         else:
-            label = f"AOI #{aoi.id}"
+            label = f"AOI #{aoi.name}"
             
 
         result.append({
@@ -284,3 +243,40 @@ def get_user_aois(db: Session = Depends(get_db), current_user: "User" = Depends(
     return result
 
 
+@app.get("/change_maps/{change_map_id}/water_analysis_image")
+def get_water_analysis_image(change_map_id: int, db: Session = Depends(get_db)):
+    change_map = db.query(ChangeMap).filter(ChangeMap.id == change_map_id).first()
+    if not change_map or not change_map.water_analysis_image:
+        raise HTTPException(status_code=404, detail="Water analysis image not found")
+
+    return StreamingResponse(
+        BytesIO(change_map.water_analysis_image),
+        media_type="image/tiff"
+    )
+
+@app.get("/change_maps/{change_map_id}/collage_image")
+def get_collage_image(change_map_id: int, db: Session = Depends(get_db)):
+    change_map = db.query(ChangeMap).filter(ChangeMap.id == change_map_id).first()
+    if not change_map or not change_map.collage_image:
+        raise HTTPException(status_code=404, detail="Collage image not found")
+
+    return StreamingResponse(
+        BytesIO(change_map.collage_image),
+        media_type="image/tiff"
+    )
+
+
+@app.get("/dashboard")
+def get_dashboard(db: Session = Depends(get_db)):
+    total_aois = db.query(AOI).count()
+    total_change_maps = db.query(ChangeMap).count()
+    last_analysis = db.query(ChangeMap.created_at).order_by(ChangeMap.created_at.desc()).first()
+    # pending_tasks = db.query(ChangeMap).filter(ChangeMap.status == "pending").count()
+    
+
+    return {
+        "total_aois": total_aois,
+        "total_change_maps": total_change_maps,
+        "last_analysis_date": last_analysis[0].strftime("%B %d, %Y %I:%M:%S %p") if last_analysis else None,
+        # "pending_tasks": pending_tasks,
+    }

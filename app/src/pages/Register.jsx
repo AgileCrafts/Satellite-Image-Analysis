@@ -49,6 +49,8 @@ const navigate = useNavigate();
   };
 
   return (
+
+  <div className="reg-body">
     <div className="register">
       <Title level={2} style={{ textAlign: 'center', marginBottom: 20 }}>
         Registration
@@ -145,6 +147,8 @@ const navigate = useNavigate();
         </Form.Item>
       </Form>
     </div>
+
+  </div>
   );
 };
 
