@@ -7,6 +7,7 @@ import jwt
 import datetime
 from shapely.geometry import shape
 from downloader.image_downloader import download_change_map_images, load_config
+from downloader.image_downloader2 import another_download_change_map_images
 from database import get_db
 from models import User, AOI, ChangeMap
 from schemas import LoginRequest, RegisterRequest, ChangeMapCreate
@@ -196,7 +197,7 @@ def save_change_map_selection(data: ChangeMapCreate, db: Session = Depends(get_d
     db.commit()
     db.refresh(new_map)
     
-    download_change_map_images(new_map.id)
+    another_download_change_map_images(new_map.id)
     run_water_analysis(new_map.id)
 
     return {"message": "Change map selection saved", "change_map_id": new_map.id}

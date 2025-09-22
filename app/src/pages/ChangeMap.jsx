@@ -14,6 +14,9 @@ function ChangeMap() {
   const [selectedDates, setSelectedDates] = useState(null);
   const [waterImg, setWaterImg] = useState(null);
   const [collageImg, setCollageImg] = useState(null);
+  const [showTestImage, setShowTestImage] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+
 
   // Fetch AOIs from backend on component mount
     useEffect(() => {
@@ -81,6 +84,13 @@ function ChangeMap() {
     return;
   }
 
+  //clear previous ones
+  setWaterImg(null);
+  setCollageImg(null);
+  setShowTestImage(false);
+  setLoadingMessage("Images are being generated...");
+
+
   // Prepare the selected dates and AOI payload
   const payload = {
     aoi_id: selectedAoi,
@@ -123,11 +133,15 @@ fetch("http://localhost:8000/change_maps", {
       })
         .then((res) => res.blob())
         .then((blob) => setCollageImg(URL.createObjectURL(blob)));
+        
 
-
+         setShowTestImage(true);
     })
-    .catch((err) => message.error(err.message));
-
+    .catch((err) => {
+      message.error(err.message);
+      
+    })
+    .finally(() => setLoadingMessage(""));
   
 };
 
@@ -192,6 +206,8 @@ fetch("http://localhost:8000/change_maps", {
         Save & View Details
       </button>
 
+      {loadingMessage && <p>{loadingMessage}</p>}
+
       {waterImg && (
         <div className="image"style={{ marginTop: "20px" }}>
           <h3>Water Analysis Image</h3>
@@ -203,6 +219,17 @@ fetch("http://localhost:8000/change_maps", {
         <div className="image" style={{ marginTop: "20px" }}>
           <h3>Collage Image</h3>
           <img src={collageImg} alt="Collage" style={{ width: "1100px", height:"300px",  border: "1px solid #ccc" }} />
+        </div>
+      )}
+
+      {showTestImage && (
+        <div className="image" style={{ marginTop: "20px" }}>
+          <h3>Boats detected in the image:</h3>
+          <img
+            src="/annotated_test5.png"  
+            alt="Test5"
+            style={{ width: "900px", height:"400px", border: "1px solid #ccc" }}
+          />
         </div>
       )}
 

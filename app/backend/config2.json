@@ -1,0 +1,9 @@
+{
+  "username": "sia@agilecrafts.com",
+  "password": "6)D3tXmU5GSvSVQ",
+  "sh_base_url": "https://sh.dataspace.copernicus.eu",
+  "sh_token_url": "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token",
+  "max_cloud_coverage": 20,
+  "resolution": 10,
+  "output_format": "jpg"
+}
