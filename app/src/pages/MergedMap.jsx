@@ -1,14 +1,10 @@
 import '@ant-design/v5-patch-for-react-19';
 import { message, Card, Row, Col, Spin } from 'antd';
 import React, { useState, useEffect, useRef } from "react";
-import Map, { NavigationControl } from "react-map-gl";
-import MapboxDraw from "@mapbox/mapbox-gl-draw";
-import "mapbox-gl/dist/mapbox-gl.css";
-import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import axios from "axios";
-import { DrawControl, MapMover } from './MapPage'; // Adjust path as needed
+import MapPage from './MapPage'; // Import MapPage
 import { ChangeMapInputs } from './ChangeMap'; // Adjust path as needed
 
 const LEGENDS = [
@@ -78,27 +74,10 @@ const MergedMapPage = () => {
     fetchAois();
   }, []);
 
-  const handleSearch = () => {
-    const lat = parseFloat(coords.lat.trim());
-    const lng = parseFloat(coords.lng.trim());
-    if (isNaN(lat) || isNaN(lng)) {
-      console.log("Invalid coordinates:", coords);
-      return;
-    }
-    setSearchCoords({ lat, lng });
-  };
-
-  const handleDrawMode = (mode) => {
-    if (drawRef.current) {
-      drawRef.current.changeMode(mode);
-    }
-  };
-
   const openLightbox = (imgSrc) => {
     setLightboxSlides([{ src: imgSrc }]);
     setLightboxOpen(true);
-  }
-
+  };
 
   return (
     <div className="dashboard" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
@@ -106,172 +85,15 @@ const MergedMapPage = () => {
       <div style={{ display: "flex", minHeight: "500px", flexShrink: 0 }}>
         {/* Map Section */}
         <div style={{ flex: 1, position: "relative" }}>
-          <Map
-            id="myMap"
-            initialViewState={{
-              latitude: 23.5657,
-              longitude: 90.5356,
-              zoom: 12,
-            }}
-            style={{ width: "100%", height: "100%" }}
-            mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
-            mapboxAccessToken="pk.eyJ1IjoicnViYXlldHJhaXNhIiwiYSI6ImNtZmYxNjVyNzBkY3cya29hd3JwcHgxem8ifQ.9EWRZl8FOkbvcz5aVBDOpg"
-          >
-            <DrawControl position="top-right" onAoiChange={setAoi} drawRef={drawRef} />
-            <MapMover searchCoords={searchCoords} />
-            <NavigationControl position="top-left" />
-            {/* Search Bar */}
-            <div
-              className="map-search-bar"
-              style={{
-                position: "absolute",
-                top: 10,
-                left: "50%",
-                transform: "translateX(-50%)",
-                zIndex: 1000,
-                display: "flex",
-                gap: "6px",
-              }}
-            >
-              <input
-                type="text"
-                placeholder="Latitude"
-                value={coords.lat}
-                onChange={(e) => setCoords({ ...coords, lat: e.target.value })}
-                className="map-search-input"
-              />
-              <input
-                type="text"
-                placeholder="Longitude"
-                value={coords.lng}
-                onChange={(e) => setCoords({ ...coords, lng: e.target.value })}
-                className="map-search-input"
-              />
-              <button onClick={handleSearch} className="save-btn map-search-button">
-                Go
-              </button>
-            </div>
-            {/* Custom Draw Buttons */}
-            <div
-              style={{
-                position: "absolute",
-                top: 68,
-                right: 10,
-                zIndex: 1000,
-                border: 0,
-              }}
-            >
-              <div className="mapboxgl-ctrl mapboxgl-ctrl-group">
-                <button
-                  className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_rectangle"
-                  title="Draw rectangle"
-                  onClick={() => handleDrawMode("draw_rectangle")}
-                >
-                  <svg viewBox="0 0 24 24" width="20" height="20">
-                    <rect
-                      x="4"
-                      y="4"
-                      width="16"
-                      height="12"
-                      fill="none"
-                      stroke="black"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </button>
-                <button
-                  className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_circle"
-                  title="Draw circle"
-                  onClick={() => handleDrawMode("draw_circle")}
-                >
-                  <svg viewBox="0 0 24 24" width="20" height="20">
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="8"
-                      fill="none"
-                      stroke="black"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            {/* AOI display */}
-            <div
-              className="floating-card"
-              style={{
-                position: "absolute",
-                bottom: 10,
-                left: "10px",
-                zIndex: 1000,
-                padding: "10px",
-                maxWidth: "400px",
-                maxHeight: "400px",
-                overflowY: "auto",
-              }}
-            >
-              <h4>AOI GeoJSON:</h4>
-              <pre>{aoi ? JSON.stringify(aoi, null, 2) : "No AOI selected"}</pre>
-              {aoi && (
-                <>
-                  <button
-                    onClick={() => {
-                      const geojsonStr = JSON.stringify(aoi, null, 2);
-                      const blob = new Blob([geojsonStr], { type: "application/json" });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = "aoi.geojson";
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                    className="save-btn"
-                  >
-                    Download AOI
-                  </button>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const token = localStorage.getItem("authToken");
-                        if (!token) {
-                          message.error("No auth token found. Please log in.");
-                          return;
-                        }
-                        const response = await fetch("http://localhost:8000/aoi", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                          },
-                          body: JSON.stringify(aoi),
-                        });
-                        if (!response.ok) {
-                          const errorData = await response.json();
-                          throw new Error(errorData.detail || "Failed to save AOI");
-                        }
-                        const data = await response.json();
-                        console.log("AOI saved:", data);
-                        message.success(`AOI saved successfully! AOI ID: ${data.aoi_id}`);
-                        const res = await axios.get("http://127.0.0.1:8000/aois", {
-                          headers: { Authorization: `Bearer ${token}` },
-                        });
-                        if (Array.isArray(res.data)) {
-                          setAois(res.data);
-                        }
-                      } catch (err) {
-                        console.error(err);
-                        message.error(err.message || "Failed to save AOI");
-                      }
-                    }}
-                    className="save-btn"
-                  >
-                    Save
-                  </button>
-                </>
-              )}
-            </div>
-          </Map>
+          <MapPage
+            aoi={aoi}
+            setAoi={setAoi}
+            coords={coords}
+            setCoords={setCoords}
+            searchCoords={searchCoords}
+            setSearchCoords={setSearchCoords}
+            drawRef={drawRef}
+          />
         </div>
         {/* Input Fields Section */}
         <div className="change-map-container">
@@ -340,11 +162,10 @@ const MergedMapPage = () => {
                     className="summary-card"
                     onClick={() => openLightbox(collageImg)}
                     headStyle={{ textAlign: 'right' }}
-                    
                   >
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <div style={{ maxWidth: '600px' }}>
-                        <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px', textAlign: 'right' }}>
                           Composite view of satellite imagery from the selected period.
                         </p>
                         <img

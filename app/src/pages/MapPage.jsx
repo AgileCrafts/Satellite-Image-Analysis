@@ -306,12 +306,7 @@ export const MapMover = ({ searchCoords }) => {
   return null;
 };
 
-const MapPage = () => {
-  const [aoi, setAoi] = useState(null);
-  const [coords, setCoords] = useState({ lat: "", lng: "" });
-  const [searchCoords, setSearchCoords] = useState(null);
-  const drawRef = useRef(null);
-
+const MapPage = ({ aoi, setAoi, coords, setCoords, searchCoords, setSearchCoords, drawRef }) => {
   const handleSearch = () => {
     const lat = parseFloat(coords.lat.trim());
     const lng = parseFloat(coords.lng.trim());
@@ -330,36 +325,6 @@ const MapPage = () => {
 
   return (
     <div style={{ height: "100%", width: "100%", position: "relative" }}>
-      {/* Search Bar */}
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 1000,
-          background: "white",
-          padding: "8px 12px",
-          borderRadius: "8px",
-          display: "flex",
-          gap: "8px",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Latitude"
-          value={coords.lat}
-          onChange={(e) => setCoords({ ...coords, lat: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Longitude"
-          value={coords.lng}
-          onChange={(e) => setCoords({ ...coords, lng: e.target.value })}
-        />
-        <button onClick={handleSearch}>Go</button>
-      </div>
-
       <Map
         id="myMap"
         initialViewState={{
@@ -374,122 +339,152 @@ const MapPage = () => {
         <DrawControl position="top-right" onAoiChange={setAoi} drawRef={drawRef} />
         <MapMover searchCoords={searchCoords} />
         <NavigationControl position="top-left" />
-      </Map>
-
-      {/* Custom Draw Buttons */}
-      <div
-        style={{
-          position: "absolute",
-          top: 68,
-          right: 10,
-          zIndex: 1000,
-          border: 0,
-        }}
-      >
-        <div className="mapboxgl-ctrl mapboxgl-ctrl-group">
-          <button
-            className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_rectangle"
-            title="Draw rectangle"
-            onClick={() => handleDrawMode("draw_rectangle")}
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <rect
-                x="4"
-                y="4"
-                width="16"
-                height="12"
-                fill="none"
-                stroke="black"
-                strokeWidth="2"
-              />
-            </svg>
-          </button>
-          <button
-            className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_circle"
-            title="Draw circle"
-            onClick={() => handleDrawMode("draw_circle")}
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <circle
-                cx="12"
-                cy="12"
-                r="8"
-                fill="none"
-                stroke="black"
-                strokeWidth="2"
-              />
-            </svg>
+        {/* Search Bar */}
+        <div
+          className="map-search-bar"
+          style={{
+            position: "absolute",
+            top: 10,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            display: "flex",
+            gap: "6px",
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Latitude"
+            value={coords.lat}
+            onChange={(e) => setCoords({ ...coords, lat: e.target.value })}
+            className="map-search-input"
+          />
+          <input
+            type="text"
+            placeholder="Longitude"
+            value={coords.lng}
+            onChange={(e) => setCoords({ ...coords, lng: e.target.value })}
+            className="map-search-input"
+          />
+          <button onClick={handleSearch} className="save-btn map-search-button">
+            Go
           </button>
         </div>
-      </div>
-
-      {/* AOI display */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          left: "10px",
-          zIndex: 1000,
-          background: "white",
-          padding: "10px",
-          borderRadius: "8px",
-          maxWidth: "400px",
-          maxHeight: "400px",
-          overflowY: "auto",
-        }}
-      >
-        <h4>AOI GeoJSON:</h4>
-        <pre>{aoi ? JSON.stringify(aoi, null, 2) : "No AOI selected"}</pre>
-        {aoi && (
-          <>
+        {/* Custom Draw Buttons */}
+        <div
+          style={{
+            position: "absolute",
+            top: 68,
+            right: 10,
+            zIndex: 1000,
+            border: 0,
+          }}
+        >
+          <div className="mapboxgl-ctrl mapboxgl-ctrl-group">
             <button
-              onClick={() => {
-                const geojsonStr = JSON.stringify(aoi, null, 2);
-                const blob = new Blob([geojsonStr], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "aoi.geojson";
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
+              className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_rectangle"
+              title="Draw rectangle"
+              onClick={() => handleDrawMode("draw_rectangle")}
             >
-              Download AOI
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="12"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="2"
+                />
+              </svg>
             </button>
             <button
-              onClick={async () => {
-                try {
-                  const token = localStorage.getItem("authToken");
-                  if (!token) {
-                    message.error("No auth token found. Please log in.");
-                    return;
-                  }
-                  const response = await fetch("http://localhost:8000/aoi", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(aoi),
-                  });
-                  if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || "Failed to save AOI");
-                  }
-                  const data = await response.json();
-                  console.log("AOI saved:", data);
-                  message.success(`AOI saved successfully! AOI ID: ${data.aoi_id}`);
-                } catch (err) {
-                  console.error(err);
-                  message.error(err.message || "Failed to save AOI");
-                }
-              }}
+              className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_circle"
+              title="Draw circle"
+              onClick={() => handleDrawMode("draw_circle")}
             >
-              Save
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="8"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="2"
+                />
+              </svg>
             </button>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+        {/* AOI Display */}
+        <div
+          className="floating-card"
+          style={{
+            position: "absolute",
+            bottom: 10,
+            left: "10px",
+            zIndex: 1000,
+            padding: "10px",
+            maxWidth: "400px",
+            maxHeight: "400px",
+            overflowY: "auto",
+          }}
+        >
+          <h4>AOI GeoJSON:</h4>
+          <pre>{aoi ? JSON.stringify(aoi, null, 2) : "No AOI selected"}</pre>
+          {aoi && (
+            <>
+              <button
+                onClick={() => {
+                  const geojsonStr = JSON.stringify(aoi, null, 2);
+                  const blob = new Blob([geojsonStr], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download="aoi.geojson";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="save-btn"
+              >
+                Download AOI
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem("authToken");
+                    if (!token) {
+                      message.error("No auth token found. Please log in.");
+                      return;
+                    }
+                    const response = await fetch("http://localhost:8000/aoi", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify(aoi),
+                    });
+                    if (!response.ok) {
+                      const errorData = await response.json();
+                      throw new Error(errorData.detail || "Failed to save AOI");
+                    }
+                    const data = await response.json();
+                    console.log("AOI saved:", data);
+                    message.success(`AOI saved successfully! AOI ID: ${data.aoi_id}`);
+                  } catch (err) {
+                    console.error(err);
+                    message.error(err.message || "Failed to save AOI");
+                  }
+                }}
+                className="save-btn"
+              >
+                Save
+              </button>
+            </>
+          )}
+        </div>
+      </Map>
     </div>
   );
 };
