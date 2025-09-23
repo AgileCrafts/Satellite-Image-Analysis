@@ -5,7 +5,8 @@ import MapPage from './pages/MapPage';
 import Dashboard from './pages/Dashboard';
 import Register from './pages/Register';
 import MainLayout from './pages/MainLayout';
-import ChangeMap from './pages/ChangeMap'
+import ChangeMap from './pages/ChangeMap';
+import MergedMapPage from './pages/MergedMap';
 
 function App() {
   return (
@@ -15,8 +16,9 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/map/view" element={<MapPage />} />
-          <Route path="/map/changemap" element={<ChangeMap />} />
+          <Route path="/map" element={<MergedMapPage />} />
+          {/* <Route path="/map/view" element={<MapPage />} />
+          <Route path="/map/changemap" element={<ChangeMap />} /> */}
         </Route>
       </Routes>
     </Router>

@@ -1,7 +1,5 @@
-
 import '@ant-design/v5-patch-for-react-19';
 import { message } from 'antd';
-
 import React, { useEffect, useState, useRef } from "react";
 import Map, { useMap, NavigationControl } from "react-map-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
@@ -9,10 +7,8 @@ import * as turf from "@turf/turf";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 
-
-
 // Custom Rectangle Mode
-const RectangleMode = {
+export const RectangleMode = {
   onSetup() {
     const rect = this.newFeature({
       type: "Feature",
@@ -36,7 +32,7 @@ const RectangleMode = {
       this.updateRectangle(state, [e.lngLat.lng, e.lngLat.lat]);
       this.updateUIClasses({ mouse: "pointer" });
       this.changeMode("simple_select", { featureIds: [state.rect.id] });
-      this.map.fire('draw.create', { features: [state.rect.toGeoJSON()] }); // Manually trigger draw.create
+      this.map.fire('draw.create', { features: [state.rect.toGeoJSON()] });
     }
     this.updateRectangle(state, [e.lngLat.lng, e.lngLat.lat]);
   },
@@ -59,7 +55,7 @@ const RectangleMode = {
       [maxX, minY],
       [maxX, maxY],
       [minX, maxY],
-      [minX, minY], // Closing point
+      [minX, minY],
     ];
     state.rect.setCoordinates([coords]);
   },
@@ -78,7 +74,7 @@ const RectangleMode = {
 };
 
 // Custom Circle Mode
-const CircleMode = {
+export const CircleMode = {
   onSetup() {
     const circle = this.newFeature({
       type: "Feature",
@@ -102,7 +98,7 @@ const CircleMode = {
       this.updateCircle(state, [e.lngLat.lng, e.lngLat.lat]);
       this.updateUIClasses({ mouse: "pointer" });
       this.changeMode("simple_select", { featureIds: [state.circle.id] });
-      this.map.fire('draw.create', { features: [state.circle.toGeoJSON()] }); // Manually trigger draw.create
+      this.map.fire('draw.create', { features: [state.circle.toGeoJSON()] });
     }
     this.updateCircle(state, [e.lngLat.lng, e.lngLat.lat]);
   },
@@ -138,7 +134,7 @@ const CircleMode = {
 };
 
 // DrawControl component
-const DrawControl = ({ position, onAoiChange, drawRef }) => {
+export const DrawControl = ({ position, onAoiChange, drawRef }) => {
   const [selectedFeatureId, setSelectedFeatureId] = useState(null);
   const [buttonPosition, setButtonPosition] = useState(null);
   const { current: map } = useMap();
@@ -184,8 +180,6 @@ const DrawControl = ({ position, onAoiChange, drawRef }) => {
       ],
     });
 
-    
-
     drawRef.current = draw;
     map.addControl(draw, position);
 
@@ -210,41 +204,31 @@ const DrawControl = ({ position, onAoiChange, drawRef }) => {
     map.on("draw.update", updateAoi);
     map.on("draw.delete", updateAoi);
 
-
     map.on("draw.selectionchange", (e) => {
-    if (e.features.length > 0) {
-      const feature = e.features[0];
-      setSelectedFeatureId(feature.id);
-
-
-      // Get bounding box of the feature
-      const [minX, minY, maxX, maxY] = turf.bbox(feature);
-
-      // Choose the top-right corner (maxX, maxY)
-      const corner = [maxX, maxY];
-
-      // Convert map coords → screen pixels
-      const pixel = map.project(corner);
-      setButtonPosition({ x: pixel.x, y: pixel.y });
-    } else {
-      setSelectedFeatureId(null);
-      setButtonPosition(null);
-    }
-  
-  });
-
-  map.on("move", () => {
-    if (selectedFeatureId) {
-      const feature = drawRef.current.get(selectedFeatureId);
-      if (feature) {
+      if (e.features.length > 0) {
+        const feature = e.features[0];
+        setSelectedFeatureId(feature.id);
         const [minX, minY, maxX, maxY] = turf.bbox(feature);
         const corner = [maxX, maxY];
         const pixel = map.project(corner);
         setButtonPosition({ x: pixel.x, y: pixel.y });
+      } else {
+        setSelectedFeatureId(null);
+        setButtonPosition(null);
       }
-    }
     });
 
+    map.on("move", () => {
+      if (selectedFeatureId) {
+        const feature = drawRef.current.get(selectedFeatureId);
+        if (feature) {
+          const [minX, minY, maxX, maxY] = turf.bbox(feature);
+          const corner = [maxX, maxY];
+          const pixel = map.project(corner);
+          setButtonPosition({ x: pixel.x, y: pixel.y });
+        }
+      }
+    });
 
     return () => {
       console.log("DrawControl: Cleaning up, map exists:", !!map, "draw exists:", !!drawRef.current);
@@ -264,50 +248,46 @@ const DrawControl = ({ position, onAoiChange, drawRef }) => {
       } catch (error) {
         console.error("DrawControl: Cleanup error:", error);
       }
-      drawRef.current = null; // Clear ref to prevent stale references
+      drawRef.current = null;
     };
   }, [map, position, onAoiChange, drawRef]);
 
-
-
   return (
-  <>
-    {selectedFeatureId && buttonPosition && (
-      <button
-      style={{
-        position: "absolute",
-        left: `${buttonPosition.x}px`,
-        top: `${buttonPosition.y}px`,
-        transform: "translate(10%, -50%)", // shift to the side
-        zIndex: 1000,
-        padding: "2px 6px",
-        background: "red",
-        color: "white",
-        border: "none",
-        borderRadius: "4px",
-        cursor: "pointer",
-        fontSize: "12px"
-      }}
-      onClick={() => {
-        if (window.confirm("Delete this AOI?")) {
-          drawRef.current?.delete(selectedFeatureId);
-          setSelectedFeatureId(null);
-          setButtonPosition(null);
-          onAoiChange(null);
-        }
-      }}
-    >
-      ✖
-    </button>
-    )}
-  </>
-);
-
-  return null;
+    <>
+      {selectedFeatureId && buttonPosition && (
+        <button
+          style={{
+            position: "absolute",
+            left: `${buttonPosition.x}px`,
+            top: `${buttonPosition.y}px`,
+            transform: "translate(10%, -50%)",
+            zIndex: 1000,
+            padding: "2px 6px",
+            background: "red",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "12px",
+          }}
+          onClick={() => {
+            if (window.confirm("Delete this AOI?")) {
+              drawRef.current?.delete(selectedFeatureId);
+              setSelectedFeatureId(null);
+              setButtonPosition(null);
+              onAoiChange(null);
+            }
+          }}
+        >
+          ✖
+        </button>
+      )}
+    </>
+  );
 };
 
 // MapMover component
-const MapMover = ({ searchCoords }) => {
+export const MapMover = ({ searchCoords }) => {
   const { current: map } = useMap();
 
   useEffect(() => {
@@ -342,7 +322,6 @@ const MapPage = () => {
     setSearchCoords({ lat, lng });
   };
 
-  //Custom AOI buttons in separate container
   const handleDrawMode = (mode) => {
     if (drawRef.current) {
       drawRef.current.changeMode(mode);
@@ -401,49 +380,48 @@ const MapPage = () => {
       <div
         style={{
           position: "absolute",
-          top: 68, // just below the draw/nav controls
+          top: 68,
           right: 10,
           zIndex: 1000,
-          border:0
-  }}
->
-          <div className="mapboxgl-ctrl mapboxgl-ctrl-group">
-            <button
-              className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_rectangle"
-              title="Draw rectangle"
-              onClick={() => handleDrawMode("draw_rectangle")}
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20">
-                <rect
-                  x="4"
-                  y="4"
-                  width="16"
-                  height="12"
-                  fill="none"
-                  stroke="black"
-                  strokeWidth="2"
-                />
-              </svg>
-            </button>
-            <button
-              className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_circle"
-              title="Draw circle"
-              onClick={() => handleDrawMode("draw_circle")}
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20">
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="8"
-                  fill="none"
-                  stroke="black"
-                  strokeWidth="2"
-                />
-              </svg>
-            </button>
-          </div>
+          border: 0,
+        }}
+      >
+        <div className="mapboxgl-ctrl mapboxgl-ctrl-group">
+          <button
+            className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_rectangle"
+            title="Draw rectangle"
+            onClick={() => handleDrawMode("draw_rectangle")}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <rect
+                x="4"
+                y="4"
+                width="16"
+                height="12"
+                fill="none"
+                stroke="black"
+                strokeWidth="2"
+              />
+            </svg>
+          </button>
+          <button
+            className="mapbox-gl-draw_ctrl-draw-btn mapbox-gl-draw_circle"
+            title="Draw circle"
+            onClick={() => handleDrawMode("draw_circle")}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <circle
+                cx="12"
+                cy="12"
+                r="8"
+                fill="none"
+                stroke="black"
+                strokeWidth="2"
+              />
+            </svg>
+          </button>
         </div>
-
+      </div>
 
       {/* AOI display */}
       <div
@@ -463,58 +441,53 @@ const MapPage = () => {
         <h4>AOI GeoJSON:</h4>
         <pre>{aoi ? JSON.stringify(aoi, null, 2) : "No AOI selected"}</pre>
         {aoi && (
-        <>
-          <button
-            onClick={() => {
-              const geojsonStr = JSON.stringify(aoi, null, 2);
-              const blob = new Blob([geojsonStr], { type: "application/json" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "aoi.geojson";
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-          >
-            Download AOI
-          </button>
-
-          {/* Save to backend button */}
-        <button
-          onClick={async () => {
-            try {
-              const token = localStorage.getItem("authToken");
-              if (!token) {
-                message.error("No auth token found. Please log in.");
-                return;
-              }
-
-              const response = await fetch("http://localhost:8000/aoi", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`, // Add authentication header
-                },
-                body: JSON.stringify(aoi),
-              });
-
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || "Failed to save AOI");
-              }
-
-              const data = await response.json();
-              console.log("AOI saved:", data);
-              message.success(`AOI saved successfully! AOI ID: ${data.aoi_id}`);
-            } catch (err) {
-              console.error(err);
-              message.error(err.message || "Failed to save AOI");
-            }
-          }}
-        >
-          Save
-        </button>
-      </>
+          <>
+            <button
+              onClick={() => {
+                const geojsonStr = JSON.stringify(aoi, null, 2);
+                const blob = new Blob([geojsonStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "aoi.geojson";
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              Download AOI
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const token = localStorage.getItem("authToken");
+                  if (!token) {
+                    message.error("No auth token found. Please log in.");
+                    return;
+                  }
+                  const response = await fetch("http://localhost:8000/aoi", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(aoi),
+                  });
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || "Failed to save AOI");
+                  }
+                  const data = await response.json();
+                  console.log("AOI saved:", data);
+                  message.success(`AOI saved successfully! AOI ID: ${data.aoi_id}`);
+                } catch (err) {
+                  console.error(err);
+                  message.error(err.message || "Failed to save AOI");
+                }
+              }}
+            >
+              Save
+            </button>
+          </>
         )}
       </div>
     </div>

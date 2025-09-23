@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from models import Image, AOI, ChangeMap
 from database import SessionLocal
 from geoalchemy2.shape import to_shape
+import math
 
 # ---------------- CONFIG ----------------
 def load_config(path="config2.json"):
@@ -194,7 +195,28 @@ def download_scene(scene_info, cfg, bbox, token, index, aoi_id: int, db: Session
     print(f"Downloading scene {index+1}: {scene_id} on {date_str}, cloud={cloud_cover}")
 
     # fixed output size
-    width, height = 512, 512
+    
+    scale_factor = 10000  # try increasing/decreasing this
+
+    width = int((bbox[2] - bbox[0]) * scale_factor)
+    height = int((bbox[3] - bbox[1]) * scale_factor)
+    
+    print(width)
+    print(height)
+    # minx, miny, maxx, maxy = bbox
+    # center_lat = (miny + maxy) / 2
+
+    # scale_factor_lat = 111320 / 10  # ~11,132 pixels per degree latitude
+    # scale_factor_lon = (111320 * math.cos(math.radians(center_lat))) / 10
+    
+    # print(scale_factor_lat)
+
+    # width = int((maxx - minx) * scale_factor_lon)
+    # height = int((maxy - miny) * scale_factor_lat)
+
+    # width = max(1, width)
+    # height = max(1, height)
+
     time_interval = (f"{date_str}T00:00:00Z", f"{date_str}T23:59:59Z")
 
     # NDWI evalscript

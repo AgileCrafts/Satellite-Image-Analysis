@@ -1,195 +1,156 @@
 import '@ant-design/v5-patch-for-react-19';
-import { message } from 'antd';
-
-import React, { useState , useEffect} from "react";
+import { message, Spin } from 'antd';
+import React from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import axios from "axios";
 
-function ChangeMap() {
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
-  const [aois, setAois] = useState([]);      // list of AOIs from backend
-  const [selectedAoi, setSelectedAoi] = useState(""); // selected AOI id
-  const [selectedDates, setSelectedDates] = useState(null);
-  const [waterImg, setWaterImg] = useState(null);
-  const [collageImg, setCollageImg] = useState(null);
-  const [showTestImage, setShowTestImage] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("");
+export const ChangeMapInputs = ({
+  fromDate,
+  setFromDate,
+  toDate,
+  setToDate,
+  aois,
+  selectedAoi,
+  setSelectedAoi,
+  selectedDates,
+  setSelectedDates,
+  setWaterImg,
+  setCollageImg,
+  setShowTestImage,
+  setLoadingMessage,
+  // setWaterChangePercent,
+  // setNewReducedCount,
+}) => {
+  const saveDates = () => {
+    if (!fromDate || !toDate) {
+      message.error("Please select both dates");
+      return;
+    }
+    if (!selectedAoi) {
+      message.error("Please select an AOI");
+      return;
+    }
 
+    setWaterImg(null);
+    setCollageImg(null);
+    setShowTestImage(false);
+    setLoadingMessage("Images are being generated...");
 
-  // Fetch AOIs from backend on component mount
-    useEffect(() => {
-    const fetchAois = async () => {
-      try {
-        const token = localStorage.getItem("authToken"); 
-        if (!token) {
-        console.error("No auth token found in localStorage");
-        setAois([]);
-        return;
-      }
-        const res =await axios.get("http://127.0.0.1:8000/aois", {
-        headers: { Authorization: `Bearer ${token}` }
-        });
-
-
-        console.log("Full response from /aois:", res); 
-        // Make sure it's an array
-        if (Array.isArray(res.data)) {
-          setAois(res.data);
-        } else {
-          console.error("AOI response is not an array:", res.data);
-          setAois([]);
-        }
-      } catch (err) {
-        console.error("Failed to fetch AOIs:", err);
-        setAois([]);
-      }
+    const payload = {
+      aoi_id: selectedAoi,
+      from_date: fromDate.toISOString().split("T")[0],
+      to_date: toDate.toISOString().split("T")[0],
     };
 
-    fetchAois();
-  }, []);
+    setSelectedDates(payload);
+    const token = localStorage.getItem("authToken");
 
-  // useEffect(() => {
-  //   const fetchAois = () => {
-  //     const token = localStorage.getItem("authToken");
-  //     if (!token) {
-  //       console.error("No auth token found in localStorage");
-  //       setAois([]);
-  //       return;
-  //     }
-
-  //     axios.get("http://127.0.0.1:8000/aois", {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     })
-  //     .then((res) => {
-  //       setAois(res.data);  // Assuming the response has an array of AOIs
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error fetching AOIs:", error);
-  //       setAois([]);  // Or handle the error appropriately
-  //     });
-  //   };
-
-  //   fetchAois();
-  // }, []);
-
-  const saveDates = () => {
-  if (!fromDate || !toDate) {
-    alert("Please select both dates");
-    return;
-  }
-  if (!selectedAoi) {
-    alert("Please select an AOI");
-    return;
-  }
-
-  //clear previous ones
-  setWaterImg(null);
-  setCollageImg(null);
-  setShowTestImage(false);
-  setLoadingMessage("Images are being generated...");
-
-
-  // Prepare the selected dates and AOI payload
-  const payload = {
-    aoi_id: selectedAoi,
-    from_date: fromDate.toISOString().split("T")[0],
-    to_date: toDate.toISOString().split("T")[0],
-};
-
-  // Save in frontend state
-  setSelectedDates(payload);
-  const token = localStorage.getItem("authToken");
-
-fetch("http://localhost:8000/change_maps", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${token}`
-  },
-  body: JSON.stringify(payload),
-})
-  
-  .then((res) => {
-      if (!res.ok) throw new Error("Failed to save selection");
-      return res.json();
+    fetch("http://localhost:8000/change_maps", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
     })
-    .then((data) => {
-      message.success(`Selection saved! Change Map ID: ${data.change_map_id}`);
-      console.log(data);
-
-
-      // Fetch water_analysis_image
-      fetch(`http://localhost:8000/change_maps/${data.change_map_id}/water_analysis_image`, {
-        headers: { Authorization: `Bearer ${token}` }
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to save selection: ${res.statusText}`);
+        return res.json();
       })
-        .then((res) => res.blob())
-        .then((blob) => setWaterImg(URL.createObjectURL(blob)));
+      .then((data) => {
+        message.success(`Selection saved! Change Map ID: ${data.change_map_id}`);
+        console.log("Change map response:", data);
 
-      // Fetch collage_image
-      fetch(`http://localhost:8000/change_maps/${data.change_map_id}/collage_image`, {
-        headers: { Authorization: `Bearer ${token}` }
+        /*
+        // Fetch water summary
+        fetch(`http://localhost:8000/change_maps/${data.change_map_id}/summary`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`Failed to fetch summary: ${res.statusText}`);
+            return res.json();
+          })
+          .then((summary) => {
+            setWaterChangePercent(summary.water_area_change);
+            setNewReducedCount(summary.new_reduced_water_count);
+          })
+          .catch((err) => {
+            console.error("Summary error:", err);
+            message.error("Failed to load summary data");
+          });
+        */
+
+        // Fetch water analysis image
+        fetch(`http://localhost:8000/change_maps/${data.change_map_id}/water_analysis_image`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`Failed to fetch water image: ${res.statusText}`);
+            return res.blob();
+          })
+          .then((blob) => setWaterImg(URL.createObjectURL(blob)))
+          .catch((err) => {
+            console.error("Water image error:", err);
+            message.error("Failed to load water analysis image");
+          });
+
+        // Fetch collage image
+        fetch(`http://localhost:8000/change_maps/${data.change_map_id}/collage_image`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`Failed to fetch collage image: ${res.statusText}`);
+            return res.blob();
+          })
+          .then((blob) => setCollageImg(URL.createObjectURL(blob)))
+          .catch((err) => {
+            console.error("Collage image error:", err);
+            message.error("Failed to load collage image");
+          });
+
+        setShowTestImage(true);
       })
-        .then((res) => res.blob())
-        .then((blob) => setCollageImg(URL.createObjectURL(blob)));
-        
-
-         setShowTestImage(true);
-    })
-    .catch((err) => {
-      message.error(err.message);
-      
-    })
-    .finally(() => setLoadingMessage(""));
-  
-};
-
+      .catch((err) => {
+        console.error("Save dates error:", err);
+        message.error(err.message);
+      })
+      .finally(() => setLoadingMessage(""));
+  };
 
   return (
-    <div className="change-map-container">
+    <div>
       <h2>Select Dates to View Change Maps</h2>
-
-      <div className="date-picker-row">
-        <label htmlFor="from-date">From:</label>
+      <div style={{ marginBottom: "15px" }}>
+        <label htmlFor="from-date" style={{ display: "block", marginBottom: "5px" }}>From:</label>
         <DatePicker
           id="from-date"
           selected={fromDate}
           onChange={setFromDate}
           dateFormat="dd-MM-yyyy"
-          placeholderText="Select start date(DD-MM-YYYY)"
+          placeholderText="Select start date (DD-MM-YYYY)"
           maxDate={toDate || null}
-          onChangeRaw={(e) => {
-            const value = e.target.value;
-            const date = new Date(value);
-            if (!isNaN(date)) setFromDate(date);
-          }}
+          className="date-picker-input"
         />
-      {/* </div>
-
-      <div className="date-picker-row"> */}
-        <label htmlFor="to-date">To:</label>
+      </div>
+      <div style={{ marginBottom: "15px" }}>
+        <label htmlFor="to-date" style={{ display: "block", marginBottom: "5px" }}>To:</label>
         <DatePicker
           id="to-date"
           selected={toDate}
           onChange={setToDate}
           dateFormat="dd-MM-yyyy"
-          placeholderText="Select end date(DD-MM-YYYY)"
-        //   minDate={fromDate || null}
-          onChangeRaw={(e) => {
-            const value = e.target.value;
-            const date = new Date(value);
-            if (!isNaN(date)) setToDate(date);
-          }}
+          placeholderText="Select end date (DD-MM-YYYY)"
+          minDate={fromDate || null}
+          className="date-picker-input"
         />
       </div>
-
-      <div className="aoi-dropdown-row" style={{ marginTop: "15px" }}>
-        <label htmlFor="aoi-select">Select AOI:</label>
+      <div style={{ marginBottom: "15px" }}>
+        <label htmlFor="aoi-select" style={{ display: "block", marginBottom: "5px" }}>Select AOI:</label>
         <select
           id="aoi-select"
           value={selectedAoi || ""}
           onChange={(e) => setSelectedAoi(Number(e.target.value))}
+          style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
         >
           <option value="" disabled>
             -- Choose AOI --
@@ -201,42 +162,14 @@ fetch("http://localhost:8000/change_maps", {
           ))}
         </select>
       </div>
-
-      <button className="save-btn" style={{ marginTop: "20px" }} onClick={saveDates}>
+      <button
+        onClick={saveDates}
+        style={{ width: "100%", padding: "8px", borderRadius: "4px", background: "#1890ff", color: "white", border: "none" }}
+      >
         Save & View Details
       </button>
-
-      {loadingMessage && <p>{loadingMessage}</p>}
-
-      {waterImg && (
-        <div className="image"style={{ marginTop: "20px" }}>
-          <h3>Water Analysis Image</h3>
-          <img src={waterImg} alt="Water Analysis" style={{ width: "900px", height:"400px", border: "1px solid #ccc" }} />
-        </div>
-      )}
-
-      {collageImg && (
-        <div className="image" style={{ marginTop: "20px" }}>
-          <h3>Collage Image</h3>
-          <img src={collageImg} alt="Collage" style={{ width: "1100px", height:"300px",  border: "1px solid #ccc" }} />
-        </div>
-      )}
-
-      {showTestImage && (
-        <div className="image" style={{ marginTop: "20px" }}>
-          <h3>Boats detected in the image:</h3>
-          <img
-            src="/annotated_test5.png"  
-            alt="Test5"
-            style={{ width: "900px", height:"400px", border: "1px solid #ccc" }}
-          />
-        </div>
-      )}
-
-
     </div>
-    
   );
-}
+};
 
-export default ChangeMap;
+export default ChangeMapInputs;
