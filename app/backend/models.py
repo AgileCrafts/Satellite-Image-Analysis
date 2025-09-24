@@ -29,6 +29,7 @@ class Image(Base):
     aoi_id = Column(Integer)
     image_date = Column(Date)
     ndwi_data = Column(LargeBinary, nullable=True)  # Changed to LargeBinary for bytea
+    # ndbi_data = Column(LargeBinary, nullable=True)
     rgb_data = Column(LargeBinary, nullable=True)  # Changed to LargeBinary for bytea
     meta_data = Column(JSONB, nullable=True)  # Changed to LargeBinary for bytea
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
@@ -47,6 +48,9 @@ class ChangeMap(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     collage_image = Column(LargeBinary, nullable=True)
     water_analysis_image = Column(LargeBinary, nullable=True)
+    builtup_collage_image = Column(LargeBinary, nullable=True)
+    builtup_analysis_image = Column(LargeBinary, nullable=True)
+    
 
     # relationships if needed
     # aoi = relationship("AOI")

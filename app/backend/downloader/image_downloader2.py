@@ -201,6 +201,9 @@ def download_scene(scene_info, cfg, bbox, token, index, aoi_id: int, db: Session
     width = int((bbox[2] - bbox[0]) * scale_factor)
     height = int((bbox[3] - bbox[1]) * scale_factor)
     
+    # width = max(1300, width)
+    # height = max(500, height)
+    
     print(width)
     print(height)
     # minx, miny, maxx, maxy = bbox

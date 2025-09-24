@@ -7,6 +7,8 @@ import * as turf from "@turf/turf";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 
+
+
 // Custom Rectangle Mode
 export const RectangleMode = {
   onSetup() {
@@ -306,7 +308,7 @@ export const MapMover = ({ searchCoords }) => {
   return null;
 };
 
-const MapPage = ({ aoi, setAoi, coords, setCoords, searchCoords, setSearchCoords, drawRef }) => {
+const MapPage = ({ aoi, setAoi, coords, setCoords, searchCoords, setSearchCoords, drawRef, setAois }) => {
   const handleSearch = () => {
     const lat = parseFloat(coords.lat.trim());
     const lng = parseFloat(coords.lng.trim());
@@ -472,6 +474,27 @@ const MapPage = ({ aoi, setAoi, coords, setCoords, searchCoords, setSearchCoords
                     const data = await response.json();
                     console.log("AOI saved:", data);
                     message.success(`AOI saved successfully! AOI ID: ${data.aoi_id}`);
+
+                    // Optimistic update: Add the new AOI to the parent's state immediately
+                    const newAoi = {
+                      id: data.aoi_id,
+                      label: aoi.properties?.label || `AOI ${data.aoi_id}`, // Adjust based on your AOI structure
+                      geometry: aoi.geometry, // Include geometry if needed
+                    };
+                    setAois(prevAois => [...prevAois, newAoi]); // Update parent's aois state
+
+                    // Refetch to sync with backend (optional, depending on backend behavior)
+                    const res = await fetch("http://127.0.0.1:8000/aois", {
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (res.ok) {
+                      const updatedAois = await res.json();
+                      if (Array.isArray(updatedAois)) {
+                        setAois(updatedAois); // Sync with full list from backend
+                      }
+                    }
+
+                    
                   } catch (err) {
                     console.error(err);
                     message.error(err.message || "Failed to save AOI");

@@ -18,6 +18,8 @@ export const ChangeMapInputs = ({
   setCollageImg,
   setShowTestImage,
   setLoadingMessage,
+  setBuiltupAnalysisImg, 
+  setBuiltupCollageImg,
   // setWaterChangePercent,
   // setNewReducedCount,
 }) => {
@@ -35,6 +37,8 @@ export const ChangeMapInputs = ({
     setCollageImg(null);
     setShowTestImage(false);
     setLoadingMessage("Images are being generated...");
+    setBuiltupAnalysisImg(null); 
+    setBuiltupCollageImg(null);
 
     const payload = {
       aoi_id: selectedAoi,
@@ -106,6 +110,34 @@ export const ChangeMapInputs = ({
           .catch((err) => {
             console.error("Collage image error:", err);
             message.error("Failed to load collage image");
+          });
+
+          // Fetch builtup analysis image
+        fetch(`http://localhost:8000/change_maps/${data.change_map_id}/builtup_analysis_image`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`Failed to fetch builtup analysis image: ${res.statusText}`);
+            return res.blob();
+          })
+          .then((blob) => setBuiltupAnalysisImg(URL.createObjectURL(blob)))
+          .catch((err) => {
+            console.error("Builtup analysis image error:", err);
+            message.error("Failed to load builtup analysis image");
+          });
+
+        // Fetch builtup collage image
+        fetch(`http://localhost:8000/change_maps/${data.change_map_id}/builtup_collage_image`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`Failed to fetch builtup collage image: ${res.statusText}`);
+            return res.blob();
+          })
+          .then((blob) => setBuiltupCollageImg(URL.createObjectURL(blob)))
+          .catch((err) => {
+            console.error("Builtup collage image error:", err);
+            message.error("Failed to load builtup collage image");
           });
 
         setShowTestImage(true);

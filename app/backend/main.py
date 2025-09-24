@@ -14,6 +14,7 @@ from schemas import LoginRequest, RegisterRequest, ChangeMapCreate
 from geoalchemy2.shape import from_shape
 import asyncio
 from water_analysis import run_water_analysis
+from infrastructure_analysis import run_builtup_analysis
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 
@@ -95,7 +96,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     # Generate JWT token
     token_data = {
         "sub": user.username,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)
     }
     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -199,6 +200,7 @@ def save_change_map_selection(data: ChangeMapCreate, db: Session = Depends(get_d
     
     another_download_change_map_images(new_map.id)
     run_water_analysis(new_map.id)
+    run_builtup_analysis(new_map.id)
 
     return {"message": "Change map selection saved", "change_map_id": new_map.id}
 
@@ -266,6 +268,29 @@ def get_collage_image(change_map_id: int, db: Session = Depends(get_db)):
         media_type="image/tiff"
     )
 
+
+@app.get("/change_maps/{change_map_id}/builtup_analysis_image")
+def get_builtup_analysis_image(change_map_id: int, db: Session = Depends(get_db)):
+    change_map = db.query(ChangeMap).filter(ChangeMap.id == change_map_id).first()
+    if not change_map or not change_map.builtup_analysis_image:
+        raise HTTPException(status_code=404, detail="Built-up analysis image not found")
+
+    return StreamingResponse(
+        BytesIO(change_map.builtup_analysis_image),
+        media_type="image/tiff"
+    )
+
+@app.get("/change_maps/{change_map_id}/builtup_collage_image")
+def get_builtup_collage_image(change_map_id: int, db: Session = Depends(get_db)):
+    change_map = db.query(ChangeMap).filter(ChangeMap.id == change_map_id).first()
+    if not change_map or not change_map.builtup_collage_image:
+        raise HTTPException(status_code=404, detail="Built-up collage image not found")
+
+    return StreamingResponse(
+        BytesIO(change_map.builtup_collage_image),
+        media_type="image/tiff"
+    )
+    
 
 @app.get("/dashboard")
 def get_dashboard(db: Session = Depends(get_db)):

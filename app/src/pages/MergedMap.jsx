@@ -4,14 +4,21 @@ import React, { useState, useEffect, useRef } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import axios from "axios";
-import MapPage from './MapPage'; // Import MapPage
-import { ChangeMapInputs } from './ChangeMap'; // Adjust path as needed
+import MapPage from './MapPage'; 
+import { ChangeMapInputs } from './ChangeMap'; 
 
 const LEGENDS = [
   { color: '#0000FF', label: 'Stable Water (water → water)' },
   { color: '#FF0000', label: 'Water Receded (water → land)' },
   { color: '#00FF00', label: 'New Water (land → water)' },
   { color: '#808080', label: 'Stable Land (land → land)' },
+];
+
+const BUILTUP_LEGENDS = [
+  { color: '#C800C8', label: 'New Built-up Area (growth)' },
+  { color: '#FFA500', label: 'Stable Built-up Area' },
+  { color: '#00FFFF', label: 'Reduced Built-up Area' },
+  { color: '#808080', label: 'Non-Built-up Area' },
 ];
 
 const LegendItem = ({ color, label }) => (
@@ -45,6 +52,8 @@ const MergedMapPage = () => {
   const [loadingMessage, setLoadingMessage] = useState("");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxSlides, setLightboxSlides] = useState([]);
+  const [builtupAnalysisImg, setBuiltupAnalysisImg] = useState(null);
+  const [builtupCollageImg, setBuiltupCollageImg] = useState(null);
   const drawRef = useRef(null);
 
   useEffect(() => {
@@ -93,6 +102,7 @@ const MergedMapPage = () => {
             searchCoords={searchCoords}
             setSearchCoords={setSearchCoords}
             drawRef={drawRef}
+            setAois={setAois}
           />
         </div>
         {/* Input Fields Section */}
@@ -111,6 +121,8 @@ const MergedMapPage = () => {
             setCollageImg={setCollageImg}
             setShowTestImage={setShowTestImage}
             setLoadingMessage={setLoadingMessage}
+            setBuiltupAnalysisImg={setBuiltupAnalysisImg}
+            setBuiltupCollageImg={setBuiltupCollageImg}
           />
         </div>
       </div>
@@ -171,6 +183,62 @@ const MergedMapPage = () => {
                         <img
                           src={collageImg}
                           alt="Collage"
+                          className="thumbnail"
+                          style={{ width: '100%', borderRadius: '6px', cursor: 'pointer' }}
+                        />
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+            )}
+            {builtupAnalysisImg && (
+              <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+                <Col xs={24}>
+                  <Card
+                    title="Built-up Area Analysis"
+                    hoverable
+                    className="summary-card"
+                    onClick={() => openLightbox(builtupAnalysisImg)}
+                  >
+                    <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px' }}>
+                      Analysis of built-up area changes between {selectedDates?.from_date} and {selectedDates?.to_date}.
+                    </p>
+                    <div className="image-legend-container">
+                      <img
+                      src={builtupAnalysisImg}
+                      alt="Built-up Analysis"
+                      className="thumbnail"
+                      style={{ width: '400px', height: '200px', borderRadius: '6px', cursor: 'pointer' }}
+                    />
+                      <div className="legend-container">
+                        {BUILTUP_LEGENDS.map((legend) => (
+                          <LegendItem key={legend.color} {...legend} />
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+            )}
+            {builtupCollageImg && (
+              <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+                <Col xs={24}>
+                  <Card
+                    title="Built-up Image Comparison"
+                    hoverable
+                    className="summary-card"
+                    onClick={() => openLightbox(builtupCollageImg)}
+                    headStyle={{ textAlign: 'right' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <div style={{ maxWidth: '600px' }}>
+                        <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px', textAlign: 'right' }}>
+                          Composite view of built-up area imagery from the selected period.
+                        </p>
+                        <img
+                          src={builtupCollageImg}
+                          alt="Built-up Collage"
                           className="thumbnail"
                           style={{ width: '100%', borderRadius: '6px', cursor: 'pointer' }}
                         />
