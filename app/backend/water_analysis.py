@@ -7,7 +7,7 @@ from skimage.morphology import remove_small_objects, remove_small_holes
 import tifffile
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Image as ImageModel, ChangeMap  # Ensure your ORM models are correct
+from models import Image as ImageModel, ChangeMap  
 
 # ---------------- MNDWI & MASK ----------------
 def calculate_mndwi(green_band, swir1_band):

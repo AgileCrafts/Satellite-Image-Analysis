@@ -17,6 +17,13 @@ from water_analysis import run_water_analysis
 from infrastructure_analysis import run_builtup_analysis
 from fastapi.responses import StreamingResponse
 from io import BytesIO
+from inference_sdk import InferenceHTTPClient
+import supervision as sv
+import requests
+from PIL import Image
+import cv2
+import numpy as np
+from matplotlib import pyplot as plt
 
 
 
@@ -306,3 +313,133 @@ def get_dashboard(db: Session = Depends(get_db)):
         "last_analysis_date": last_analysis[0].strftime("%B %d, %Y %I:%M:%S %p") if last_analysis else None,
         # "pending_tasks": pending_tasks,
     }
+    
+# @app.post("/run-inference/{aoi_id}")
+# async def run_inference(aoi_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+#     # Fetch AOI
+#     aoi = db.query(AOI).filter(AOI.id == aoi_id, AOI.user_id == current_user.id).first()
+#     if not aoi:
+#         raise HTTPException(status_code=404, detail="AOI not found")
+
+#     # Extract centroid from GeoJSON
+#     if aoi.geojson:
+#         geom = aoi.geojson.get("geometry") or (
+#             aoi.geojson.get("features")[0].get("geometry")
+#             if "features" in aoi.geojson else None
+#         )
+#         if geom and "coordinates" in geom:
+#             coords = geom["coordinates"][0]  # First ring for polygon
+#             lats = [c[1] for c in coords]
+#             lons = [c[0] for c in coords]
+#             latitude = (min(lats) + max(lats)) / 2
+#             longitude = (min(lons) + max(lons)) / 2
+#         else:
+#             raise HTTPException(status_code=400, detail="Invalid GeoJSON geometry")
+#     else:
+#         raise HTTPException(status_code=400, detail="No GeoJSON data available")
+
+#     # Configuration for Mapbox and inference
+#     MAPBOX_TOKEN = "pk.eyJ1IjoicnViYXlldHJhaXNhIiwiYSI6ImNtZmYxNjVyNzBkY3cya29hd3JwcHgxem8ifQ.9EWRZl8FOkbvcz5aVBDOpg"
+#     zoom, width, height = 17, 1280, 1280
+#     style = "satellite-streets-v12"
+#     CLIENT = InferenceHTTPClient(
+#         api_url="https://serverless.roboflow.com",
+#         api_key="I5Ze1O0bcvMDOrhG1IFw"
+#     )
+
+#     # Build URL
+#     url = (
+#         f"https://api.mapbox.com/styles/v1/mapbox/{style}/static/"
+#         f"{longitude},{latitude},{zoom}/{width}x{height}@2x"
+#         f"?access_token={MAPBOX_TOKEN}"
+#     )
+
+#     # Download image from Mapbox
+#     response = requests.get(url)
+#     if response.status_code != 200:
+#         raise HTTPException(status_code=500, detail=f"Failed to fetch image: {response.status_code}, {response.text}")
+
+#     pil_image = Image.open(BytesIO(response.content)).convert("RGB")
+#     image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+
+#     # Run inference
+#     result = CLIENT.infer(pil_image, model_id="brick-kiln-detection-golrh/1")
+#     detections = sv.Detections.from_inference(result)
+
+#     # Build labels
+#     labels = [
+#         f"{detections.data['class_name'][i]} {detections.confidence[i]*100:.1f}%"
+#         for i in range(len(detections))
+#     ]
+
+#     # Annotate image
+#     box_annotator = sv.BoxAnnotator()
+#     label_annotator = sv.LabelAnnotator()
+#     annotated_image = box_annotator.annotate(scene=image.copy(), detections=detections)
+#     annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections, labels=labels)
+
+#     # Convert annotated image to bytes for response
+#     _, buffer = cv2.imencode(".png", annotated_image)
+#     byte_io = BytesIO(buffer.tobytes())
+
+#     return StreamingResponse(byte_io, media_type="image/png")
+
+# In app.py, add this new endpoint
+@app.post("/run-inference-by-coords")
+async def run_inference_by_coords(data: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    lat = data.get("lat")
+    lon = data.get("lon")
+    if not lat or not lon:
+        raise HTTPException(status_code=400, detail="Latitude and longitude are required")
+
+    try:
+        lat = float(lat)
+        lon = float(lon)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Latitude and longitude must be numbers")
+
+    # Configuration for Mapbox and inference (same as before)
+    MAPBOX_TOKEN = "pk.eyJ1IjoicnViYXlldHJhaXNhIiwiYSI6ImNtZmYxNjVyNzBkY3cya29hd3JwcHgxem8ifQ.9EWRZl8FOkbvcz5aVBDOpg"
+    zoom, width, height = 17, 1280, 1280
+    style = "satellite-streets-v12"
+    CLIENT = InferenceHTTPClient(
+        api_url="https://serverless.roboflow.com",
+        api_key="I5Ze1O0bcvMDOrhG1IFw"
+    )
+
+    # Build URL using provided coordinates
+    url = (
+        f"https://api.mapbox.com/styles/v1/mapbox/{style}/static/"
+        f"{lon},{lat},{zoom}/{width}x{height}@2x"
+        f"?access_token={MAPBOX_TOKEN}"
+    )
+
+    # Download image from Mapbox
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch image: {response.status_code}, {response.text}")
+
+    pil_image = Image.open(BytesIO(response.content)).convert("RGB")
+    image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+
+    # Run inference
+    result = CLIENT.infer(pil_image, model_id="brick-kiln-detection-golrh/1")
+    detections = sv.Detections.from_inference(result)
+
+    # Build labels
+    labels = [
+        f"{detections.data['class_name'][i]} {detections.confidence[i]*100:.1f}%"
+        for i in range(len(detections))
+    ]
+
+    # Annotate image
+    box_annotator = sv.BoxAnnotator()
+    label_annotator = sv.LabelAnnotator()
+    annotated_image = box_annotator.annotate(scene=image.copy(), detections=detections)
+    annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections, labels=labels)
+
+    # Convert annotated image to bytes
+    _, buffer = cv2.imencode(".png", annotated_image)
+    byte_io = BytesIO(buffer.tobytes())
+
+    return StreamingResponse(byte_io, media_type="image/png")

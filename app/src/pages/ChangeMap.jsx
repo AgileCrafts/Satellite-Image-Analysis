@@ -36,7 +36,7 @@ export const ChangeMapInputs = ({
     setWaterImg(null);
     setCollageImg(null);
     setShowTestImage(false);
-    setLoadingMessage("Images are being generated...");
+    setLoadingMessage("Results are being generated...");
     setBuiltupAnalysisImg(null); 
     setBuiltupCollageImg(null);
 

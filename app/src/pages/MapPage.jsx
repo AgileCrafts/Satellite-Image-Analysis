@@ -273,7 +273,7 @@ export const DrawControl = ({ position, onAoiChange, drawRef }) => {
             fontSize: "12px",
           }}
           onClick={() => {
-            if (window.confirm("Delete this AOI?")) {
+            if (window.confirm("Remove this AOI?")) {
               drawRef.current?.delete(selectedFeatureId);
               setSelectedFeatureId(null);
               setButtonPosition(null);

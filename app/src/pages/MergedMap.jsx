@@ -54,6 +54,7 @@ const MergedMapPage = () => {
   const [lightboxSlides, setLightboxSlides] = useState([]);
   const [builtupAnalysisImg, setBuiltupAnalysisImg] = useState(null);
   const [builtupCollageImg, setBuiltupCollageImg] = useState(null);
+  const [extraImage, setExtraImage] = useState("/annotated_mapbox.png");
   const drawRef = useRef(null);
 
   useEffect(() => {
@@ -145,8 +146,8 @@ const MergedMapPage = () => {
                     className="summary-card"
                     onClick={() => openLightbox(waterImg)}
                   >
-                    <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px' }}>
-                      Analysis of water body changes between {selectedDates?.from_date} and {selectedDates?.to_date}.
+                    <p style={{ marginBottom: '12px', color: '#050505ff', fontSize: '14px' }}>
+                      Analysis of water body changes between {selectedDates?.from_date} and {selectedDates?.to_date}. Red areas can be marked for water loss and can be checked for any issues. Green areas are a good sign that water has been increased in those places.
                     </p>
                     <div className="image-legend-container">
                       <img
@@ -177,7 +178,7 @@ const MergedMapPage = () => {
                   >
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <div style={{ maxWidth: '600px' }}>
-                        <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px', textAlign: 'right' }}>
+                        <p style={{ marginBottom: '12px', color: '#0c0a0aff', fontSize: '14px', textAlign: 'right' }}>
                           Composite view of satellite imagery from the selected period.
                         </p>
                         <img
@@ -201,8 +202,8 @@ const MergedMapPage = () => {
                     className="summary-card"
                     onClick={() => openLightbox(builtupAnalysisImg)}
                   >
-                    <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px' }}>
-                      Analysis of built-up area changes between {selectedDates?.from_date} and {selectedDates?.to_date}.
+                    <p style={{ marginBottom: '12px', color: '#050505ff', fontSize: '14px' }}>
+                      Analysis of built-up area changes between {selectedDates?.from_date} and {selectedDates?.to_date}. Purple areas should be checked for new infrastructures.
                     </p>
                     <div className="image-legend-container">
                       <img
@@ -233,7 +234,7 @@ const MergedMapPage = () => {
                   >
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <div style={{ maxWidth: '600px' }}>
-                        <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px', textAlign: 'right' }}>
+                        <p style={{ marginBottom: '12px', color: '#000000ff', fontSize: '14px', textAlign: 'right' }}>
                           Composite view of built-up area imagery from the selected period.
                         </p>
                         <img
@@ -257,7 +258,7 @@ const MergedMapPage = () => {
                     className="summary-card"
                     onClick={() => openLightbox("/annotated_test5.png")}
                   >
-                    <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px' }}>
+                    <p style={{ marginBottom: '12px', color: '#000000ff', fontSize: '14px' }}>
                       Annotated image highlighting detected boats in the area of interest.
                     </p>
                     <img
@@ -270,6 +271,32 @@ const MergedMapPage = () => {
                 </Col>
               </Row>
             )}
+
+            {(waterImg && collageImg && builtupAnalysisImg && showTestImage) && (
+              <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+                <Col xs={24}>
+                  <Card
+                    title="Detected Brick Kilns"
+                    hoverable
+                    className="summary-card"
+                    onClick={() => openLightbox(extraImage)}
+                  >
+                    <p style={{ marginBottom: '12px', color: '#000000ff', fontSize: '14px' }}>
+                      Annotated image highlighting detected brick kilns near the area of interest.
+                    </p>
+                    <img
+                      src={extraImage}
+                      alt="Brick Kiln"
+                      className="thumbnail"
+                      style={{ width: '400px', height: '200px', borderRadius: '6px', cursor: 'pointer' }}
+                    />
+                  </Card>
+                </Col>
+              </Row>
+            )}
+
+
+
           </div>
         )}
         <Lightbox

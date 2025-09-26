@@ -24,7 +24,7 @@ const Dashboard = () => {
           borderRadius: 1,
         }}
       >
-        <h2>Welcome to the Change Map Dashboard!</h2>
+        <h2>Welcome to the Satellite Image Analysis Dashboard!</h2>
         <h4>Quick summary of your AOIs and analyses</h4>
       </Card>
 

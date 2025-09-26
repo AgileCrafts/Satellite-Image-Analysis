@@ -17,8 +17,16 @@ def calculate_ndbi(swir1_band, nir_band):
 def create_builtup_mask(ndbi_image, threshold):
     return ndbi_image > threshold
 
-def adaptive_ndbi_threshold(ndbi, percentile=70):
+def adaptive_ndbi_threshold(ndbi, percentile=60):
     return np.percentile(ndbi, percentile)
+
+#---------------- NDWI & MASK ----------------
+def calculate_mndwi(green_band, swir1_band):
+    denominator = green_band + swir1_band
+    return np.where(denominator == 0, 0, (green_band - swir1_band) / denominator)
+
+def create_water_mask(mndwi_image, threshold):
+    return mndwi_image > threshold
 
 def load_s2_bands_from_bytes(tiff_bytes):
     """
@@ -32,11 +40,20 @@ def load_s2_bands_from_bytes(tiff_bytes):
 
 # ---------------- BUILT-UP CHANGE MAP ----------------
 def generate_builtup_change_map(pre_bytes, post_bytes):
-    _, _, _, pre_nir, pre_swir1 = load_s2_bands_from_bytes(pre_bytes)
-    _, _, _, post_nir, post_swir1 = load_s2_bands_from_bytes(post_bytes)
+    green, _, _, pre_nir, pre_swir1 = load_s2_bands_from_bytes(pre_bytes)
+    green, _, _, post_nir, post_swir1 = load_s2_bands_from_bytes(post_bytes)
 
     pre_ndbi = calculate_ndbi(pre_swir1, pre_nir)
     post_ndbi = calculate_ndbi(post_swir1, post_nir)
+
+
+    pre_mndwi = calculate_mndwi(green, pre_nir)
+    post_mndwi = calculate_mndwi(green, post_nir)
+    pre_mndwi_thresh = threshold_otsu(pre_mndwi)
+    post_mndwi_thresh = threshold_otsu(post_mndwi)
+    
+    pre_water_mask = create_water_mask(pre_mndwi,pre_mndwi_thresh)
+    post_water_mask=create_water_mask(post_mndwi,post_mndwi_thresh)
 
 
     # pre_thresh = adaptive_ndbi_threshold(pre_ndbi, percentile=85)
@@ -45,8 +62,16 @@ def generate_builtup_change_map(pre_bytes, post_bytes):
     post_thresh = threshold_otsu(post_ndbi)
 
 
-    pre_mask = remove_small_objects(remove_small_holes(create_builtup_mask(pre_ndbi, pre_thresh), area_threshold=64), min_size=20)
-    post_mask = remove_small_objects(remove_small_holes(create_builtup_mask(post_ndbi, post_thresh), area_threshold=64), min_size=20)
+    pre_mask = create_builtup_mask(pre_ndbi, pre_thresh)
+    post_mask = create_builtup_mask(post_ndbi, post_thresh)
+
+    # Remove water
+    pre_mask[pre_water_mask] = False
+    post_mask[post_water_mask] = False
+
+    # Clean masks
+    pre_mask = remove_small_objects(remove_small_holes(pre_mask, area_threshold=64), min_size=20)
+    post_mask = remove_small_objects(remove_small_holes(post_mask, area_threshold=64), min_size=20)
 
     # Ensure same shape
     min_rows = min(pre_mask.shape[0], post_mask.shape[0])
