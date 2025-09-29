@@ -1,9 +1,11 @@
 // Dashboard.jsx
 import React, { useEffect, useState } from "react";
-import { Card, Row, Col, Spin } from "antd";
+import { Card, Row, Col, Spin, Button } from "antd";
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch("http://localhost:8000/dashboard")
@@ -26,6 +28,14 @@ const Dashboard = () => {
       >
         <h2>Welcome to the Satellite Image Analysis Dashboard!</h2>
         <h4>Quick summary of your AOIs and analyses</h4>
+        <Button 
+          type="primary" 
+          size="large" 
+          onClick={() => navigate('/map')} 
+          style={{ marginTop: 20 }}
+        >
+          Go to Map
+        </Button>
       </Card>
 
       {/* Stats Cards */}

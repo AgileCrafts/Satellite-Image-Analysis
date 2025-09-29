@@ -1,6 +1,6 @@
 import React from "react";
 import { Layout, Menu, Input, theme } from "antd";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { radiansToLength } from "@turf/turf";
 
 const { Header, Content } = Layout;
@@ -8,6 +8,7 @@ const { Search } = Input;
 
 const MainLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -67,6 +68,7 @@ const MainLayout = () => {
           items={topMenu}
           style={{ minWidth: 300 }}
           onClick={(e) => navigate(e.key)}
+          selectedKeys={[location.pathname]}
         />
       </Header>
 

@@ -195,6 +195,11 @@ def download_scene(scene_info, cfg, bbox, token, index, aoi_id: int, db: Session
     print(f"Downloading scene {index+1}: {scene_id} on {date_str}, cloud={cloud_cover}")
 
     # fixed output size
+    # width=1200
+    # height=512
+    
+    
+    
     
     scale_factor = 10000  # try increasing/decreasing this
 
