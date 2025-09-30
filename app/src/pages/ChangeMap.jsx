@@ -20,6 +20,7 @@ export const ChangeMapInputs = ({
   setLoadingMessage,
   setBuiltupAnalysisImg, 
   setBuiltupCollageImg,
+  setAreaStats,
   // setWaterChangePercent,
   // setNewReducedCount,
 }) => {
@@ -39,6 +40,7 @@ export const ChangeMapInputs = ({
     setLoadingMessage("Results are being generated...");
     setBuiltupAnalysisImg(null); 
     setBuiltupCollageImg(null);
+    setAreaStats(null);
 
     const payload = {
       aoi_id: selectedAoi,
@@ -132,6 +134,13 @@ export const ChangeMapInputs = ({
         })
           .then((res) => {
             if (!res.ok) throw new Error(`Failed to fetch builtup collage image: ${res.statusText}`);
+            // Extract builtup_area_stats from the X-Builtup-Area-Stats header
+            const builtupAreaStatsHeader = res.headers.get('X-Builtup-Area-Stats');
+            if (builtupAreaStatsHeader) {
+              setAreaStats(JSON.parse(builtupAreaStatsHeader));
+            } else {
+              setAreaStats(null);
+            }
             return res.blob();
           })
           .then((blob) => setBuiltupCollageImg(URL.createObjectURL(blob)))

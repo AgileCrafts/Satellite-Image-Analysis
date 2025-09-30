@@ -24,6 +24,7 @@ from PIL import Image
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+import json
 
 
 
@@ -293,10 +294,21 @@ def get_builtup_collage_image(change_map_id: int, db: Session = Depends(get_db))
     if not change_map or not change_map.builtup_collage_image:
         raise HTTPException(status_code=404, detail="Built-up collage image not found")
 
-    return StreamingResponse(
-        BytesIO(change_map.builtup_collage_image),
-        media_type="image/tiff"
-    )
+    # Prepare the image response
+    image_stream = BytesIO(change_map.builtup_collage_image)
+    image_stream.seek(0)
+
+    # Include area_stats in the response headers or body
+    area_stats = change_map.builtup_area_stats
+    if area_stats:
+        # Return as a custom response with metadata
+        headers = {
+            "Content-Type": "image/tiff",
+            "X-Builtup-Area-Stats": json.dumps(area_stats) if area_stats else "{}"
+        }
+        return StreamingResponse(image_stream, headers=headers, media_type="image/tiff")
+    else:
+        return StreamingResponse(image_stream, media_type="image/tiff")
     
 
 @app.get("/dashboard")

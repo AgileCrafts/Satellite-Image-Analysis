@@ -1,5 +1,5 @@
 import '@ant-design/v5-patch-for-react-19';
-import { message, Card, Row, Col, Spin } from 'antd';
+import { message, Card, Row, Col, Spin, Table } from 'antd';
 import React, { useState, useEffect, useRef } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -55,6 +55,8 @@ const MergedMapPage = () => {
   const [builtupAnalysisImg, setBuiltupAnalysisImg] = useState(null);
   const [builtupCollageImg, setBuiltupCollageImg] = useState(null);
   const [extraImage, setExtraImage] = useState("/annotated_mapbox.png");
+  const [areaStats, setAreaStats] = useState(null);
+  const [changeMapId, setChangeMapId] = useState(null);
   const drawRef = useRef(null);
 
   useEffect(() => {
@@ -84,10 +86,55 @@ const MergedMapPage = () => {
     fetchAois();
   }, []);
 
+
   const openLightbox = (imgSrc) => {
     setLightboxSlides([{ src: imgSrc }]);
     setLightboxOpen(true);
   };
+
+  const columns = [
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+    },
+    {
+      title: 'Area (Hectares)',
+      dataIndex: 'area',
+      key: 'area',
+      render: (text) => Number(text).toFixed(2),
+    },
+    {
+      title: 'Color Indicator',
+      dataIndex: 'color',
+      key: 'color',
+      render: (color) => (
+        <span style={{
+          display: 'inline-block',
+          width: '20px',
+          height: '20px',
+          backgroundColor: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
+          borderRadius: '4px',
+          border: '1px solid #333',
+        }}></span>
+      ),
+    },
+  ];
+
+  const areaData = areaStats
+  ? Object.entries(areaStats).map(([category, { area_ha, color }]) => {
+      if (!area_ha || !color || !Array.isArray(color) || color.length !== 3) {
+        console.error(`Invalid data for category ${category}:`, { area_ha, color });
+        return null;
+      }
+      return {
+        key: category,
+        category,
+        area: area_ha,
+        color,
+      };
+    }).filter(item => item !== null) // Filter out invalid entries
+  : [];
 
   return (
     <div className="dashboard" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
@@ -124,6 +171,7 @@ const MergedMapPage = () => {
             setLoadingMessage={setLoadingMessage}
             setBuiltupAnalysisImg={setBuiltupAnalysisImg}
             setBuiltupCollageImg={setBuiltupCollageImg}
+            setAreaStats={setAreaStats}
           />
         </div>
       </div>
@@ -243,6 +291,38 @@ const MergedMapPage = () => {
                           className="thumbnail"
                           style={{ width: '100%', borderRadius: '6px', cursor: 'pointer' }}
                         />
+
+
+
+
+                        {areaStats && (
+                          <div style={{ marginTop: '16px' }}>
+                            <p style={{ marginBottom: '8px', color: '#333', fontSize: '16px', fontWeight: '500' }}>
+                              Area Change Summary (as of {new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}):
+                            </p>
+                            <Table
+                              columns={columns}
+                              dataSource={areaData}
+                              pagination={false}
+                              size="small"
+                              bordered
+                              summary={() => (
+                                <Table.Summary.Row>
+                                  <Table.Summary.Cell index={0} colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                                    Total Area
+                                  </Table.Summary.Cell>
+                                  <Table.Summary.Cell index={2}>
+                                    {Number(areaData.reduce((sum, { area }) => sum + area, 0)).toFixed(2)} ha
+                                  </Table.Summary.Cell>
+                                </Table.Summary.Row>
+                              )}
+                            />
+                          </div>
+                        )}
+
+
+
+
                       </div>
                     </div>
                   </Card>

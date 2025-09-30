@@ -9,6 +9,58 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Image as ImageModel, ChangeMap  
 
+def extract_red_mask(change_map_bytes):
+    """
+    Extract red-only mask from full change map (lost water areas).
+    """
+    img = Image.open(io.BytesIO(change_map_bytes)).convert("RGB")
+    arr = np.array(img)
+
+    # Keep only red pixels, set all else to black
+    red_mask = np.zeros_like(arr)
+    mask = (arr[:, :, 0] > 150) & (arr[:, :, 1] < 80) & (arr[:, :, 2] < 80)
+    red_mask[mask] = [255, 0, 0]
+
+    buf = io.BytesIO()
+    Image.fromarray(red_mask).save(buf, format="PNG")
+    buf.seek(0)
+    return buf.read()
+
+
+def overlay_mask_on_rgb(rgb_bytes, mask_bytes, alpha=0.6):
+    """
+    Overlay red mask on RGB Sentinel-2 image.
+    """
+    import numpy as np
+    from PIL import Image
+    import io
+
+    rgb_img = Image.open(io.BytesIO(rgb_bytes)).convert("RGB")
+    mask_img = Image.open(io.BytesIO(mask_bytes)).convert("RGB")
+
+    # Resize mask to match RGB image
+    mask_img = mask_img.resize(rgb_img.size, resample=Image.NEAREST)
+
+    # Convert to numpy
+    rgb_arr = np.array(rgb_img, dtype=np.uint8)
+    mask_arr = np.array(mask_img, dtype=np.uint8)
+
+    # Detect red pixels in mask
+    red_mask = (mask_arr[:, :, 0] > 150) & (mask_arr[:, :, 1] < 80) & (mask_arr[:, :, 2] < 80)
+
+    # Copy RGB and blend only where mask is True
+    overlay = rgb_arr.copy()
+    overlay[red_mask, 0] = (255 * alpha + overlay[red_mask, 0] * (1 - alpha)).astype(np.uint8)
+    overlay[red_mask, 1] = (overlay[red_mask, 1] * (1 - alpha)).astype(np.uint8)
+    overlay[red_mask, 2] = (overlay[red_mask, 2] * (1 - alpha)).astype(np.uint8)
+
+    overlay_img = Image.fromarray(overlay)
+    buf = io.BytesIO()
+    overlay_img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf.read()
+
+
 # ---------------- MNDWI & MASK ----------------
 def calculate_mndwi(green_band, swir1_band):
     denominator = green_band + swir1_band
@@ -123,7 +175,18 @@ def run_water_analysis(change_map_id: int):
         # Generate water change map
         water_bytes = generate_water_change_map(pre_img.ndwi_data, post_img.ndwi_data)
         cm.water_analysis_image = water_bytes
+        
+        
+        # Extract red-only overlay mask
+        red_mask_bytes = extract_red_mask(water_bytes)
+        # Overlay red mask on post-RGB image
+        overlay_bytes = overlay_mask_on_rgb(post_img.rgb_data, water_bytes, alpha=0.6)
+        cm.encroachment_overlay = overlay_bytes
 
+        # Save overlay to file (e.g., for debugging)
+        overlay_img = Image.open(io.BytesIO(overlay_bytes))
+        overlay_img.save("encroachment_overlay.png")   # now you can open overlay_debug.png manually
+        print("Overlay saved as overlay_debug.png")
         # Generate collage using RGB images from DB
         collage_bytes = create_image_collage(pre_img.rgb_data, post_img.rgb_data, water_bytes,
                                              str(cm.from_date), str(cm.to_date))
