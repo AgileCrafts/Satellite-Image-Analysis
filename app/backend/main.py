@@ -48,6 +48,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Builtup-Area-Stats", "X-Water-Area-Stats"],
 )
 
         
@@ -260,10 +261,31 @@ def get_water_analysis_image(change_map_id: int, db: Session = Depends(get_db)):
     if not change_map or not change_map.water_analysis_image:
         raise HTTPException(status_code=404, detail="Water analysis image not found")
 
-    return StreamingResponse(
-        BytesIO(change_map.water_analysis_image),
-        media_type="image/tiff"
-    )
+    # Convert image data to PNG
+    img = Image.open(BytesIO(change_map.water_analysis_image))
+    img_byte_arr = BytesIO()
+    img.save(img_byte_arr, format="PNG")
+    img_byte_arr.seek(0)
+
+    # Retrieve water area stats
+    water_area_stats = change_map.water_area_stats
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info(f"Raw water_area_stats from DB for change_map_id {change_map_id}: {water_area_stats}, Type: {type(water_area_stats)}")
+
+    # Validate and set header
+    stats_header = json.dumps(water_area_stats) if water_area_stats else "{}"
+    logger.info(f"Setting X-Water-Area-Stats header: {stats_header}")
+
+    headers = {
+        "Content-Type": "image/png",
+        "X-Water-Area-Stats": stats_header
+    }
+    logger.info(f"Response headers: {headers}")
+
+    return StreamingResponse(img_byte_arr, headers=headers, media_type="image/png")
+
 
 @app.get("/change_maps/{change_map_id}/collage_image")
 def get_collage_image(change_map_id: int, db: Session = Depends(get_db)):
@@ -273,7 +295,7 @@ def get_collage_image(change_map_id: int, db: Session = Depends(get_db)):
 
     return StreamingResponse(
         BytesIO(change_map.collage_image),
-        media_type="image/tiff"
+        media_type="image/png"
     )
 
 
@@ -285,7 +307,7 @@ def get_builtup_analysis_image(change_map_id: int, db: Session = Depends(get_db)
 
     return StreamingResponse(
         BytesIO(change_map.builtup_analysis_image),
-        media_type="image/tiff"
+        media_type="image/png"
     )
 
 @app.get("/change_maps/{change_map_id}/builtup_collage_image")
@@ -294,21 +316,29 @@ def get_builtup_collage_image(change_map_id: int, db: Session = Depends(get_db))
     if not change_map or not change_map.builtup_collage_image:
         raise HTTPException(status_code=404, detail="Built-up collage image not found")
 
-    # Prepare the image response
-    image_stream = BytesIO(change_map.builtup_collage_image)
-    image_stream.seek(0)
+    # Convert image data to PNG
+    img = Image.open(BytesIO(change_map.builtup_collage_image))
+    img_byte_arr = BytesIO()
+    img.save(img_byte_arr, format="PNG")
+    img_byte_arr.seek(0)
 
-    # Include area_stats in the response headers or body
     area_stats = change_map.builtup_area_stats
-    if area_stats:
-        # Return as a custom response with metadata
-        headers = {
-            "Content-Type": "image/tiff",
-            "X-Builtup-Area-Stats": json.dumps(area_stats) if area_stats else "{}"
-        }
-        return StreamingResponse(image_stream, headers=headers, media_type="image/tiff")
-    else:
-        return StreamingResponse(image_stream, media_type="image/tiff")
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info(f"Raw area_stats from DB for change_map_id {change_map_id}: {area_stats}, Type: {type(area_stats)}")
+
+    # Validate and set header
+    stats_header = json.dumps(area_stats) if area_stats else "{}"
+    logger.info(f"Setting X-Builtup-Area-Stats header: {stats_header}")
+
+    headers = {
+        "Content-Type": "image/png",
+        "X-Builtup-Area-Stats": stats_header
+    }
+    logger.info(f"Response headers: {headers}")
+
+    return StreamingResponse(img_byte_arr, headers=headers, media_type="image/png")
     
 
 @app.get("/dashboard")

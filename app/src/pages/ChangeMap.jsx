@@ -21,6 +21,8 @@ export const ChangeMapInputs = ({
   setBuiltupAnalysisImg, 
   setBuiltupCollageImg,
   setAreaStats,
+  setWaterAreaStats,
+  handleSave,
   // setWaterChangePercent,
   // setNewReducedCount,
 }) => {
@@ -41,6 +43,7 @@ export const ChangeMapInputs = ({
     setBuiltupAnalysisImg(null); 
     setBuiltupCollageImg(null);
     setAreaStats(null);
+    setWaterAreaStats(null);
 
     const payload = {
       aoi_id: selectedAoi,
@@ -67,24 +70,7 @@ export const ChangeMapInputs = ({
         message.success(`Selection saved! Change Map ID: ${data.change_map_id}`);
         console.log("Change map response:", data);
 
-        /*
-        // Fetch water summary
-        fetch(`http://localhost:8000/change_maps/${data.change_map_id}/summary`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((res) => {
-            if (!res.ok) throw new Error(`Failed to fetch summary: ${res.statusText}`);
-            return res.json();
-          })
-          .then((summary) => {
-            setWaterChangePercent(summary.water_area_change);
-            setNewReducedCount(summary.new_reduced_water_count);
-          })
-          .catch((err) => {
-            console.error("Summary error:", err);
-            message.error("Failed to load summary data");
-          });
-        */
+        
 
         // Fetch water analysis image
         fetch(`http://localhost:8000/change_maps/${data.change_map_id}/water_analysis_image`, {
@@ -134,13 +120,6 @@ export const ChangeMapInputs = ({
         })
           .then((res) => {
             if (!res.ok) throw new Error(`Failed to fetch builtup collage image: ${res.statusText}`);
-            // Extract builtup_area_stats from the X-Builtup-Area-Stats header
-            const builtupAreaStatsHeader = res.headers.get('X-Builtup-Area-Stats');
-            if (builtupAreaStatsHeader) {
-              setAreaStats(JSON.parse(builtupAreaStatsHeader));
-            } else {
-              setAreaStats(null);
-            }
             return res.blob();
           })
           .then((blob) => setBuiltupCollageImg(URL.createObjectURL(blob)))
@@ -150,6 +129,7 @@ export const ChangeMapInputs = ({
           });
 
         setShowTestImage(true);
+        handleSave(data.change_map_id);
       })
       .catch((err) => {
         console.error("Save dates error:", err);

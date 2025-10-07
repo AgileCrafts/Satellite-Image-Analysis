@@ -1,5 +1,5 @@
 import '@ant-design/v5-patch-for-react-19';
-import { message, Card, Row, Col, Spin, Table } from 'antd';
+import { message, Card, Row, Col, Spin, Alert } from 'antd';
 import React, { useState, useEffect, useRef } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -56,6 +56,7 @@ const MergedMapPage = () => {
   const [builtupCollageImg, setBuiltupCollageImg] = useState(null);
   const [extraImage, setExtraImage] = useState("/annotated_mapbox.png");
   const [areaStats, setAreaStats] = useState(null);
+  const [waterAreaStats, setWaterAreaStats] = useState(null);
   const [changeMapId, setChangeMapId] = useState(null);
   const drawRef = useRef(null);
 
@@ -85,6 +86,65 @@ const MergedMapPage = () => {
     };
     fetchAois();
   }, []);
+
+  useEffect(() => {
+    if (changeMapId) {
+      const token = localStorage.getItem("authToken");
+      fetch(`http://localhost:8000/change_maps/${changeMapId}/builtup_collage_image`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch builtup collage image: ${res.statusText}`);
+          const builtupAreaStatsHeader = res.headers.get('X-Builtup-Area-Stats');
+          console.log("X-Builtup-Area-Stats header:", builtupAreaStatsHeader);
+          if (builtupAreaStatsHeader) {
+            try {
+              setAreaStats(JSON.parse(builtupAreaStatsHeader));
+            } catch (e) {
+              console.error("Failed to parse X-Builtup-Area-Stats:", e, "Raw header:", builtupAreaStatsHeader);
+              setAreaStats(null);
+            }
+          } else {
+            setAreaStats(null);
+            console.warn("X-Builtup-Area-Stats header not found");
+          }
+          return res.blob();
+        })
+        .then((blob) => setBuiltupCollageImg(URL.createObjectURL(blob)))
+        .catch((err) => {
+          console.error("Builtup collage image error:", err);
+          message.error("Failed to load builtup collage image");
+        });
+
+
+        // Fetch water analysis image and water area stats
+      fetch(`http://localhost:8000/change_maps/${changeMapId}/water_analysis_image`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch water image: ${res.statusText}`);
+          const waterAreaStatsHeader = res.headers.get('X-Water-Area-Stats');
+          console.log("X-Water-Area-Stats header:", waterAreaStatsHeader);
+          if (waterAreaStatsHeader) {
+            try {
+              setWaterAreaStats(JSON.parse(waterAreaStatsHeader));
+            } catch (e) {
+              console.error("Failed to parse X-Water-Area-Stats:", e, "Raw header:", waterAreaStatsHeader);
+              setWaterAreaStats(null);
+            }
+          } else {
+            setWaterAreaStats(null);
+            console.warn("X-Water-Area-Stats header not found");
+          }
+          
+        })
+        .catch((err) => {
+          console.error("Water image error:", err);
+          message.error("Failed to load water analysis image");
+        });
+
+    }
+  }, [changeMapId]);
 
 
   const openLightbox = (imgSrc) => {
@@ -122,19 +182,41 @@ const MergedMapPage = () => {
   ];
 
   const areaData = areaStats
-  ? Object.entries(areaStats).map(([category, { area_ha, color }]) => {
-      if (!area_ha || !color || !Array.isArray(color) || color.length !== 3) {
-        console.error(`Invalid data for category ${category}:`, { area_ha, color });
-        return null;
-      }
-      return {
-        key: category,
-        category,
-        area: area_ha,
-        color,
-      };
-    }).filter(item => item !== null) // Filter out invalid entries
-  : [];
+    ? Object.entries(areaStats).map(([category, { area_ha, color }]) => {
+        console.log(`Processing category: ${category}, Data:`, { area_ha, color });
+        if (!area_ha || !color || !Array.isArray(color) || color.length !== 3) {
+          console.error(`Invalid data for category ${category}:`, { area_ha, color });
+          return null;
+        }
+        return {
+          key: category,
+          category,
+          area: area_ha,
+          color,
+        };
+      }).filter(item => item !== null)
+    : [];
+
+
+    const waterAreaData = waterAreaStats
+    ? Object.entries(waterAreaStats).map(([category, { area_ha, color }]) => {
+        console.log(`Processing water category: ${category}, Data:`, { area_ha, color });
+        if (!area_ha || !color || !Array.isArray(color) || color.length !== 3) {
+          console.error(`Invalid data for water category ${category}:`, { area_ha, color });
+          return null;
+        }
+        return {
+          key: category,
+          category,
+          area: area_ha,
+          color,
+        };
+      }).filter(item => item !== null)
+    : [];
+
+  const handleSave = (newChangeMapId) => {
+    setChangeMapId(newChangeMapId);
+  };
 
   return (
     <div className="dashboard" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
@@ -172,6 +254,8 @@ const MergedMapPage = () => {
             setBuiltupAnalysisImg={setBuiltupAnalysisImg}
             setBuiltupCollageImg={setBuiltupCollageImg}
             setAreaStats={setAreaStats}
+            setWaterAreaStats={setWaterAreaStats}
+            handleSave={handleSave}
           />
         </div>
       </div>
@@ -210,6 +294,106 @@ const MergedMapPage = () => {
                         ))}
                       </div>
                     </div>
+
+
+
+
+                    {waterAreaStats && (
+                        <div style={{ marginTop: '24px', lineHeight: 1.6 }}>
+                          <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#333' }}>
+                            Water Analysis Summary
+                          </h3>
+                          <ul
+                            style={{
+                              marginLeft: '20px',
+                              color: '#0c0b0b',
+                              fontSize: '14px',
+                              listStyle: 'none',
+                              padding: 0,
+                              marginTop: '12px',
+                            }}
+                          >
+                            {Object.entries(waterAreaStats).map(([key, value]) => (
+                              <li key={key} style={{ marginBottom: '10px' }}>
+                                <strong>{key}:</strong> {value.area_ha?.toFixed(2) ?? 'N/A'} ha
+                              </li>
+                            ))}
+                            <li style={{ marginTop: '16px' }}>
+                              <strong>Total Water Area:</strong>{' '}
+                              {(() => {
+                                console.log('waterAreaStats:', waterAreaStats);
+                                const waterValues = Object.entries(waterAreaStats)
+                                  .filter(([key]) => ['Persistent Water', 'New Water'].includes(key)) // Match with your data keys
+                                  .map(([, value]) => Number(value.area_ha) || 0);
+                                console.log('Water values:', waterValues);
+                                const total = waterValues.reduce((sum, area) => sum + area, 0).toFixed(2);
+                                console.log('Calculated water total:', total);
+                                return total || '0.00';
+                              })()}{' '}
+                              ha
+                          </li>
+                          </ul>
+                          {(() => {
+                            const totalWaterArea = Object.entries(waterAreaStats)
+                              .reduce((sum, [, value]) => sum + (Number(value.area_ha) || 0), 0);
+                            const significantLossThreshold = Math.max(totalWaterArea * 0.05, 1); // 10% of total, minimum 1 ha
+                            const rapidExpansionThreshold = 0.05; // 5% of relevant area
+                            const relevantWaterArea = Object.entries(waterAreaStats)
+                              .filter(([key]) => ['Persistent Water', 'New Water'].includes(key))
+                              .reduce((sum, [, value]) => sum + (Number(value.area_ha) || 0), 0);
+
+                            return (
+                              <>
+                                {waterAreaStats['Lost Water']?.area_ha > significantLossThreshold && (
+                                  <p
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      backgroundColor: '#fdecea',
+                                      color: '#611a15',
+                                      border: '1px solid #f5c6cb',
+                                      borderRadius: '6px',
+                                      padding: '10px 12px',
+                                      fontWeight: 500,
+                                      fontSize: '14px',
+                                      marginTop: '12px',
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                    }}
+                                  >
+                                    <span style={{ fontSize: '18px', marginRight: '8px' }}>⚠️</span>
+                                    <b>Significant water loss detected</b> — possible drought or human intervention.
+                                  </p>
+                                )}
+                                {/* {waterAreaStats['New Water']?.area_ha / relevantWaterArea > rapidExpansionThreshold && (
+                                  <p
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      backgroundColor: '#fdecea',
+                                      color: '#95170eff',
+                                      border: '1px solid #f5c6cb',
+                                      borderRadius: '6px',
+                                      padding: '10px 12px',
+                                      fontWeight: 500,
+                                      fontSize: '14px',
+                                      marginTop: '12px',
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                    }}
+                                  >
+                                    <span style={{ fontSize: '18px', marginRight: '8px' }}>⚠️</span>
+                                    <b>Rapid water expansion detected</b>  — consider reviewing water management plans.
+                                  </p>
+                                )} */}
+                              </>
+                            );
+                          })()}
+                          <p style={{ marginTop: '16px', color: '#000' }}>
+                            These insights aid in water resource management and environmental planning.
+                          </p>
+                        </div>
+                      )}
+
+
                   </Card>
                 </Col>
               </Row>
@@ -266,6 +450,111 @@ const MergedMapPage = () => {
                         ))}
                       </div>
                     </div>
+
+
+
+
+                    {areaStats && (
+                      <div style={{ marginTop: '24px', lineHeight: 1.6 }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#333' }}>
+                          Built-up Analysis Summary
+                        </h3>
+                        <ul
+                          style={{
+                            marginLeft: '20px',
+                            color: '#0c0b0b',
+                            fontSize: '14px',
+                            listStyle: 'none',
+                            padding: 0,
+                            marginTop: '12px',
+                          }}
+                        >
+                          {Object.entries(areaStats).map(([key, value]) => (
+                            <li key={key} style={{ marginBottom: '10px' }}>
+                              <strong>{key}:</strong> {value.area_ha?.toFixed(2) ?? 'N/A'} ha
+                            </li>
+                          ))}
+                          <li style={{ marginTop: '16px' }}>
+                            <strong>Total Built-up Area:</strong>{' '}
+                            {(() => {
+                              console.log('areaStats:', areaStats);
+                              const builtupValues = Object.entries(areaStats)
+                                .filter(([key]) => ['New Built-up', 'Persistent Built-up'].includes(key))
+                                .map(([, value]) => Number(value.area_ha) || 0);
+                              console.log('Built-up values:', builtupValues);
+                              const total = builtupValues.reduce((sum, area) => sum + area, 0).toFixed(2);
+                              console.log('Calculated total built-up area:', total);
+                              return total || '0.00';
+                            })()}{' '}
+                            ha
+                          </li>
+                        </ul>
+                        {(() => {
+                          const totalBuiltupArea = Object.entries(areaStats)
+                            .reduce((sum, [, value]) => sum + (Number(value.area_ha) || 0), 0);
+                          const significantLossThreshold = Math.max(totalBuiltupArea * 0.10, 1); // 10% of total, minimum 1 ha
+                          const rapidExpansionThreshold = 0.05; // 5% of relevant area
+                          const relevantBuiltupArea = Object.entries(areaStats)
+                            .filter(([key]) => ['New Built-up', 'Persistent Built-up'].includes(key))
+                            .reduce((sum, [, value]) => sum + (Number(value.area_ha) || 0), 0);
+
+                          return (
+                            <>
+                              {areaStats['Reduced Built-up']?.area_ha > significantLossThreshold && (
+                                <p
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: '#fdecea',
+                                    color: '#f89538ff',
+                                    border: '1px solid #f5c6cb',
+                                    borderRadius: '6px',
+                                    padding: '10px 12px',
+                                    fontWeight: 500,
+                                    fontSize: '14px',
+                                    marginTop: '12px',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                  }}
+                                >
+                                  <span style={{ fontSize: '18px', marginRight: '8px' }}>⚠️</span>
+                                  <b>Significant loss in built-up areas</b> — possible redevelopment or flood impact.
+                                </p>
+                              )}
+                              {areaStats['New Built-up']?.area_ha / relevantBuiltupArea > rapidExpansionThreshold && (
+                                <p
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: '#fdecea',
+                                    color: '#95170eff',
+                                    border: '1px solid #f5c6cb',
+                                    borderRadius: '6px',
+                                    padding: '10px 12px',
+                                    fontWeight: 500,
+                                    fontSize: '14px',
+                                    marginTop: '12px',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                  }}
+                                >
+                                  <span style={{ fontSize: '18px', marginRight: '8px' }}>⚠️</span>
+                                  <b>Rapid urban expansion detected</b> — consider reviewing land-use zoning and infrastructure plans.
+                                </p>
+                              )}
+
+                              
+                            </>
+                          );
+                        })()}
+                        <p style={{ marginTop: '16px', color: '#000' }}>
+                          These insights help inform strategic planning, infrastructure management, and sustainable development.
+                        </p>
+                      </div>
+                    )}
+              
+
+
+
+
                   </Card>
                 </Col>
               </Row>
@@ -291,37 +580,6 @@ const MergedMapPage = () => {
                           className="thumbnail"
                           style={{ width: '100%', borderRadius: '6px', cursor: 'pointer' }}
                         />
-
-
-
-
-                        {areaStats && (
-                          <div style={{ marginTop: '16px' }}>
-                            <p style={{ marginBottom: '8px', color: '#333', fontSize: '16px', fontWeight: '500' }}>
-                              Area Change Summary (as of {new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}):
-                            </p>
-                            <Table
-                              columns={columns}
-                              dataSource={areaData}
-                              pagination={false}
-                              size="small"
-                              bordered
-                              summary={() => (
-                                <Table.Summary.Row>
-                                  <Table.Summary.Cell index={0} colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                                    Total Area
-                                  </Table.Summary.Cell>
-                                  <Table.Summary.Cell index={2}>
-                                    {Number(areaData.reduce((sum, { area }) => sum + area, 0)).toFixed(2)} ha
-                                  </Table.Summary.Cell>
-                                </Table.Summary.Row>
-                              )}
-                            />
-                          </div>
-                        )}
-
-
-
 
                       </div>
                     </div>

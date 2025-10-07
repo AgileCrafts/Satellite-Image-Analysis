@@ -51,6 +51,7 @@ class ChangeMap(Base):
     builtup_collage_image = Column(LargeBinary, nullable=True)
     builtup_analysis_image = Column(LargeBinary, nullable=True)
     builtup_area_stats = Column(JSONB, nullable=True)
+    water_area_stats = Column(JSONB, nullable=True)
     encroachment_overlay= Column(LargeBinary, nullable=True)
     
 
