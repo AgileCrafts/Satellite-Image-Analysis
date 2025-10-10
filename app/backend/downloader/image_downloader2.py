@@ -201,13 +201,18 @@ def download_scene(scene_info, cfg, bbox, token, index, aoi_id: int, db: Session
     
     
     
-    scale_factor = 10000  # try increasing/decreasing this
+    scale_factor = 100000  # try increasing/decreasing this
+    
+    xwidth=(bbox[2] - bbox[0])
+    yheight=(bbox[3] - bbox[1])
+    
+    rratio=xwidth/yheight
 
-    width = int((bbox[2] - bbox[0]) * scale_factor)
-    height = int((bbox[3] - bbox[1]) * scale_factor)
+    width = int(xwidth * scale_factor)
+    height = int(yheight * scale_factor)
     
     # width = max(1300, width)
-    # height = max(500, height)
+    # height = max(int(1300/rratio), height)
     
     print(width)
     print(height)

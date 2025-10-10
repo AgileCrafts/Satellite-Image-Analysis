@@ -89,27 +89,10 @@
 from PIL import Image
 import numpy as np
 
-def count_red_area(image_path, pixel_resolution_m=10):
-    # Load image
-    img = Image.open(image_path).convert('RGB')
-    arr = np.array(img)
+from PIL import Image
 
-    # Define red pixel threshold
-    # Adjust these values if needed
-    red_mask = (arr[:,:,0] > 150) & (arr[:,:,1] < 80) & (arr[:,:,2] < 80)
-
-    # Count red pixels
-    red_pixel_count = np.sum(red_mask)
-
-    # Calculate area in square kilometers
-    area_sq_km = red_pixel_count * (pixel_resolution_m ** 2) / 1_000_000
-
-    return red_pixel_count, area_sq_km
-
-if __name__ == "__main__":
-    image_path = "copy.png"  # Replace with your screenshot path
-    pixels, area = count_red_area(image_path)
-    print(f"Red pixel count: {pixels}")
-    print(f"Estimated red area: {area:.4f} sq km")
+# Open the TIFF image
+image = Image.open("lost_water_mask.tif")
+image.show()
 
 

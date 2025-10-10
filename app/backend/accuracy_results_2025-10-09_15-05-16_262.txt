@@ -1,0 +1,20 @@
+Water Analysis Accuracy Report
+========================================
+
+ChangeMap ID: 262
+Timestamp: 2025-10-09 15:05:16
+Date Range: 2021-03-09 to 2022-03-09
+
+Script Red Area (sq km):
+- 5.6418
+
+Known Red Area from GEE Screenshot (sq km):
+- 0.035
+
+Area-Based Accuracy:
+- area_diff_sqkm: 5.6068
+- area_ratio: 161.194
+- relative_error_pct: 100
+- area_match_pct: 0
+- coverage_pct: 100.0
+- iou_accuracy_pct: 0.62

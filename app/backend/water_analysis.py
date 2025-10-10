@@ -9,7 +9,55 @@ from database import SessionLocal
 from models import Image as ImageModel, ChangeMap  
 from datetime import datetime
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+import rasterio
+from rasterio.transform import from_origin
 
+def save_binary_mask_tif(change_map_bytes, output_tif="binary_mask.tif", pixel_size=10, reference_tif=None):
+    """
+    Converts red mask bytes (from extract_red_mask) to a binary GeoTIFF mask.
+
+    Args:
+        change_map_bytes (bytes): PNG bytes returned by extract_red_mask().
+        output_tif (str): Path to save output binary mask TIF.
+        pixel_size (float): Pixel resolution if no reference geoinfo.
+        reference_tif (str): Optional reference TIFF to copy CRS/transform from.
+
+    Returns:
+        numpy.ndarray: Binary mask array (0 = background, 255 = red area)
+    """
+
+    # Step 1: Read red mask from bytes
+    img = Image.open(io.BytesIO(change_map_bytes)).convert("RGB")
+    arr = np.array(img)
+
+    # Step 2: Extract binary mask (white where red is present)
+    binary_mask = (
+        (arr[:, :, 0] > 150) & (arr[:, :, 1] < 80) & (arr[:, :, 2] < 80)
+    ).astype(np.uint8) * 255
+
+    # Step 3: Geo-transform setup
+    if reference_tif:
+        with rasterio.open(reference_tif) as src:
+            profile = src.profile
+        profile.update(count=1, dtype='uint8')
+    else:
+        transform = from_origin(0, 0, pixel_size, pixel_size)
+        profile = {
+            'driver': 'GTiff',
+            'height': binary_mask.shape[0],
+            'width': binary_mask.shape[1],
+            'count': 1,
+            'dtype': 'uint8',
+            'transform': transform,
+            'crs': "+proj=utm +zone=46 +datum=WGS84"
+        }
+
+    # Step 4: Save as GeoTIFF
+    with rasterio.open(output_tif, 'w', **profile) as dst:
+        dst.write(binary_mask, 1)
+
+    print(f"✅ Binary mask TIF saved: {output_tif}")
+    return binary_mask
 
 def extract_red_mask(change_map_bytes):
     """
@@ -293,9 +341,13 @@ def run_water_analysis(change_map_id: int, red_area_from_screenshot_sqkm: float 
         
         # Extract red-only overlay mask
         red_mask_bytes = extract_red_mask(water_bytes)
+        
         # Overlay red mask on post-RGB image
         overlay_bytes = overlay_mask_on_rgb(post_img.rgb_data, water_bytes, alpha=0.6)
         cm.encroachment_overlay = overlay_bytes
+        
+        binary_mask = save_binary_mask_tif(red_mask_bytes, "lost_water_mask.tif")
+
 
         # Save overlay to file
         overlay_img = Image.open(io.BytesIO(overlay_bytes))

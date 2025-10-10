@@ -152,67 +152,40 @@ const MergedMapPage = () => {
     setLightboxOpen(true);
   };
 
-  const columns = [
-    {
-      title: 'Category',
-      dataIndex: 'category',
-      key: 'category',
-    },
-    {
-      title: 'Area (Hectares)',
-      dataIndex: 'area',
-      key: 'area',
-      render: (text) => Number(text).toFixed(2),
-    },
-    {
-      title: 'Color Indicator',
-      dataIndex: 'color',
-      key: 'color',
-      render: (color) => (
-        <span style={{
-          display: 'inline-block',
-          width: '20px',
-          height: '20px',
-          backgroundColor: `rgb(${color[0]}, ${color[1]}, ${color[2]})`,
-          borderRadius: '4px',
-          border: '1px solid #333',
-        }}></span>
-      ),
-    },
-  ];
+  
 
-  const areaData = areaStats
-    ? Object.entries(areaStats).map(([category, { area_ha, color }]) => {
-        console.log(`Processing category: ${category}, Data:`, { area_ha, color });
-        if (!area_ha || !color || !Array.isArray(color) || color.length !== 3) {
-          console.error(`Invalid data for category ${category}:`, { area_ha, color });
-          return null;
-        }
-        return {
-          key: category,
-          category,
-          area: area_ha,
-          color,
-        };
-      }).filter(item => item !== null)
-    : [];
+  // const areaData = areaStats
+  //   ? Object.entries(areaStats).map(([category, { area_ha, color }]) => {
+  //       console.log(`Processing category: ${category}, Data:`, { area_ha, color });
+  //       if (!area_ha || !color || !Array.isArray(color) || color.length !== 3) {
+  //         console.error(`Invalid data for category ${category}:`, { area_ha, color });
+  //         return null;
+  //       }
+  //       return {
+  //         key: category,
+  //         category,
+  //         area: area_ha,
+  //         color,
+  //       };
+  //     }).filter(item => item !== null)
+  //   : [];
 
 
-    const waterAreaData = waterAreaStats
-    ? Object.entries(waterAreaStats).map(([category, { area_ha, color }]) => {
-        console.log(`Processing water category: ${category}, Data:`, { area_ha, color });
-        if (!area_ha || !color || !Array.isArray(color) || color.length !== 3) {
-          console.error(`Invalid data for water category ${category}:`, { area_ha, color });
-          return null;
-        }
-        return {
-          key: category,
-          category,
-          area: area_ha,
-          color,
-        };
-      }).filter(item => item !== null)
-    : [];
+  //   const waterAreaData = waterAreaStats
+  //   ? Object.entries(waterAreaStats).map(([category, { area_ha, color }]) => {
+  //       console.log(`Processing water category: ${category}, Data:`, { area_ha, color });
+  //       if (!area_ha || !color || !Array.isArray(color) || color.length !== 3) {
+  //         console.error(`Invalid data for water category ${category}:`, { area_ha, color });
+  //         return null;
+  //       }
+  //       return {
+  //         key: category,
+  //         category,
+  //         area: area_ha,
+  //         color,
+  //       };
+  //     }).filter(item => item !== null)
+  //   : [];
 
   const handleSave = (newChangeMapId) => {
     setChangeMapId(newChangeMapId);
