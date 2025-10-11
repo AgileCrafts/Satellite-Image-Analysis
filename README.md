@@ -10,6 +10,13 @@
   </ol>
   <div>
     <h2>Manual Detection</h2>
-    <p>This work contains detection of water in certain areas to mark water encroachment. Here MNDWI is used with other libraries to perfectly detect water surface. In here, requirements are given in config file and sentinel-2 images are downloaded using sentinel hub when run.py file is execcuted.</p>
+    <p>This work contains detection of water in certain areas to mark water encroachment. Here, MNDWI is used with other libraries to perfectly detect water surface. In here, requirements are given in config file and sentinel-2 images are downloaded using sentinel hub when run.py file is execcuted. Another seperate file called "pre-post rgb image downloader" downloads RGB images for pre and post dates. The water analysis file then completes the analysis and a collage image is also generated for better visualization.</p>
   </div>
+
+
+  <div>
+    <h2>Boat Detection Algorithms</h2>
+    <p>This work contains same methods as water detection with some super resolution and </p>
+  </div>
+  
 </div>
