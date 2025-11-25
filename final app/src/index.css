@@ -1,0 +1,407 @@
+body{
+  background: linear-gradient(to bottom, #87CEEB, #ffffff);
+  min-height: 100vh;
+  /* display: flex;
+  justify-content: center;
+  align-items: center; */
+  display: block;          /* ✅ disable flexbox centering */
+  overflow-y: auto;        
+}
+
+.log-body, .reg-body{
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.login, .register{
+  background: linear-gradient(to bottom, #d7ebfcf2, #ffffff);
+  /* background-color: #f0f8fff2; */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);   
+  border-radius: 12px;    
+  height: 450px;
+  width: 400px;
+  border: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 5%;
+
+}
+.login-form, .register-form{
+  width: 100%;
+  padding: 2% 20% 0% 20%;
+}
+.register{
+  height: 600px;
+}
+.sBtn{
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.dashboard{
+  min-height: 100vh;
+  min-width: 100vw;
+}
+/* .mapbox-gl-draw_rectangle {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect width="14" height="10" x="3" y="5" stroke="black" fill="none" stroke-width="2"/></svg>');
+  background-size: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.mapbox-gl-draw_circle {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke="black" fill="none" stroke-width="2"/></svg>');
+  background-size: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+} */
+
+.change-map-container {
+  max-width: 400px;
+  height: 100%;
+  margin: 20px 20px 20px 20px;
+  font-family: Arial, sans-serif;
+}
+
+.date-picker-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  margin-top: 20px;
+}
+
+.date-picker-row label {
+  min-width: 40px;
+}
+
+.save-btn {
+  padding: 8px 16px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background-color: #1470d2;
+}
+
+.floating-card {
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s, box-shadow 0.3s;
+  background-color: white
+}
+
+.floating-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+}
+
+#myMap {
+  width: 100%;
+  height: 100%;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+.map-search-input {
+  width: 120px;
+  height: 30px;
+  padding: 6px;
+  border-radius: 1px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.map-search-button {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.summary-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.summary-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+  transition: all 0.3s ease;
+  border: none;
+  margin-bottom: 20px;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.summary-card .ant-card-head {
+  background: #f5f7fa;
+  color: #333;
+  border-radius: 12px 12px 0 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.summary-card .ant-card-head-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.summary-card p {
+  margin-bottom: 16px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.image-legend-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.legend-container {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e8e8e8;
+  min-width: 200px;
+}
+
+.legend-container h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #333;
+  text-align: center;
+}
+
+.thumbnail {
+  max-width: 1000px;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide Lightbox navigation elements */
+.yarl__navigation_prev,
+.yarl__navigation_next,
+.yarl__slide_thumbnails_container,
+.yarl__thumbnails {
+  display: none !important;
+}
+
+
+.new-analysis-btn {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+  color: white;
+  box-shadow: inset 0 -100px 0 0 #0486ffff;
+  cursor: pointer;
+  transition: ease-out 0.5s;
+  border: 2px solid #0486ffff;
+  border-radius: 10px;
+  
+  padding: 8px 16px; 
+  font-size: 14px; 
+  font-weight: 500; 
+  line-height: 1.5; 
+}
+
+.new-analysis-btn:hover {
+  color: #0486ffff;
+  background: transparent;
+  box-shadow: inset 0 0 0 0 #0486ffff;
+}
+
+.new-analysis-btn:active {
+  transform: scale(0.9);
+}
+
+.dash-card{
+  height: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border: none;
+  margin: 0;
+  padding: 0;
+  color: black;
+  
+}
+
+.card-grid .ant-card {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 14px;
+  line-height: 1.5714285714285714;
+  list-style: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  position: relative;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+
+.ant-card-body {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.ant-card-meta-description {
+  color: black !important;  /* Change description text color */
+}
+
+.ant-menu-item-selected {
+  background-color: #1890ff !important; 
+  color: white !important; 
+}
+.report-table{
+  width: 100%;
+}
+.report-table th,td{
+  color:black;
+  padding: 10px;
+}
+.report-table th{
+  background-color: #dbdbdb;
+
+}
+.date-picker-input{
+  color: black;
+}
+ 
+.launch-button {
+  display: flex;
+  align-items: center;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;  
+  margin: 20px 0px 0px 20px;
+  padding: 8px 16px; 
+  color: white;
+  background: #1890ff;  
+  border: none;
+  border-radius: 4px;  
+  letter-spacing: 0.05em;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  
+}
+
+.launch-button svg {
+  margin-right: 8px;  /* Adjust space between icon and text */
+  transition: transform 0.3s ease;  /* Simpler transition */
+}
+
+.launch-button:hover {
+  background: #40a9ff;  /* Lighter blue on hover */
+  transform: scale(1.05);  /* Slight scaling effect on hover */
+}
+
+.launch-button:hover svg {
+  transform: rotate(90deg);  /* Rotate icon on hover */
+}
+
+
+
+/*************** Responsiveness **************/
+
+.ant-layout-sider-zero-width-trigger-left{
+  top: 0px !important;
+  
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  .card-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+}
+
+/* Mobile — THIS IS THE FIX YOU WANT */
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: 1fr;   /* ← Forces 1 column */
+    gap: 12px;
+    padding: 12px;
+  }
+
+  /* Every single card becomes full width and stacks vertically */
+  .card-grid > * {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Optional: prevent super tall cards on mobile */
+  .card-grid > [style*="gridRow"] {
+    grid-row: auto !important;
+  }
+}
+
+
+/******************** Sider ****************************/
+/* Force Sider overlay on mobile (below lg = 992px) */
+@media (max-width: 991.98px) {
+  .ant-layout-sider {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    height: 100vh;
+    transform: translateX(-100%); /* Hidden by default */
+    transition: transform 0.3s ease;
+  }
+
+  /* Show Sider when "open" class is added (AntD adds this on trigger click) */
+  .ant-layout-sider.ant-layout-sider-open {
+    transform: translateX(0);
+  }
+
+  /* Dark backdrop when open (click to close) */
+  body.ant-layout-sider-open::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    animation: fadeIn 0.3s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Prevent body scroll when open */
+  body.ant-layout-sider-open {
+    overflow: hidden;
+  }
+
+  /* Ensure content doesn't shift */
+  .ant-layout-has-sider > .ant-layout {
+    margin-left: 0 !important; /* Override push margin */
+  }
+}
