@@ -213,32 +213,7 @@ body{
 }
 
 
-.new-analysis-btn {
-  position: relative;
-  display: inline-block;
-  text-decoration: none;
-  color: white;
-  box-shadow: inset 0 -100px 0 0 #0486ffff;
-  cursor: pointer;
-  transition: ease-out 0.5s;
-  border: 2px solid #0486ffff;
-  border-radius: 10px;
-  
-  padding: 8px 16px; 
-  font-size: 14px; 
-  font-weight: 500; 
-  line-height: 1.5; 
-}
 
-.new-analysis-btn:hover {
-  color: #0486ffff;
-  background: transparent;
-  box-shadow: inset 0 0 0 0 #0486ffff;
-}
-
-.new-analysis-btn:active {
-  transform: scale(0.9);
-}
 
 .dash-card{
   height: auto;
@@ -248,6 +223,10 @@ body{
   margin: 0;
   padding: 0;
   color: black;
+  width: "100%";        
+  box-sizing: border-box;
+  display: "flex";
+  flex-Direction: "column";
   
 }
 
@@ -328,6 +307,117 @@ body{
 
 
 
+
+/* Ensure focus outline is visible after click or tab */
+.ant-btn.portBtn:focus {
+    outline: 1px solid #1890ff !important;  /* Blue outline on focus */
+    /* box-shadow: 0 0 0 2px blue !important;  Optional: add a shadow effect */
+    color: #1890ff;
+}
+
+/**************** Components *****************/
+/* MapPage */
+.mapNav{
+  width: 40px;
+  height: 40px;
+  border: none;
+  cursor: pointer;
+  background: white;
+  border-bottom: "2px solid #eee";
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  justify-content: center;
+  font-size: 18px;
+  margin-bottom: 1px;
+}
+
+/*Map Popup Button*/
+.radio-img {
+  display: flex;
+  gap: 15px; /* Space between options */
+}
+
+.radio-input {
+  display: none; /* Hide the native radio button */
+}
+
+.radio-label {
+  cursor: pointer;
+  display: inline-block;
+  position: relative; /* Positioning context for overlay */
+  width: 150px;
+  height: 80px; /* Set a fixed height for the label */
+}
+
+.image-container {
+  position: relative; /* Makes the text position relative to the image */
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.radio-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensure the image covers the whole container */
+  border-radius: 8px;
+  
+}
+
+.image-text {
+  position: absolute;
+  bottom: 10px; /* Position the text at the bottom */
+  left: 50%;
+  transform: translateX(-50%); /* Center the text horizontally */
+  color: black;
+  font-size: 1rem;
+  font-weight: bold;
+  backdrop-filter: blur(5px);
+  /* text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); Optional: adds a shadow for better visibility */
+}
+
+.radio-input:checked + .radio-label .image-container {
+  border: 2px solid #4d9af3; /* Highlight with border when selected */
+  box-shadow: 0 0 8px rgba(22, 119, 255, 0.5); /* Optional: glowing effect when selected */
+}
+
+/* Optional: hover effect */
+.radio-label:hover .image-container {
+  border: 2px solid #d9e5f6; /* Subtle border change on hover */
+  box-shadow: 0 0 5px rgba(22, 119, 255, 0.2); /* Optional hover shadow */
+}
+
+/*********** Port Dropdown ********************/
+.portBtn{
+  width: 100%;
+  padding: 20px 14px;
+  text-align: left;
+  border: 1px solid rgba(0, 0, 0, 0);
+  border-radius: 6px;
+  /* margin-bottom: 10px; */
+  cursor: pointer;
+  transition: 0.2s;
+  gap:10;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: #f4f3f386;
+}
+
+/************ Encroachment ********************/
+
+/*************** Range Selector **************/
+.ant-select-selection-placeholder {
+  color: black !important;  /* Change to your desired color */
+}
+/***************** Slider*******************/
+
+
+
+
+
+
 /*************** Responsiveness **************/
 
 .ant-layout-sider-zero-width-trigger-left{
@@ -361,6 +451,9 @@ body{
   }
 }
 
+.card-wrapper{
+  position: relative;
+}
 
 /******************** Sider ****************************/
 /* Force Sider overlay on mobile (below lg = 992px) */
@@ -403,5 +496,30 @@ body{
   /* Ensure content doesn't shift */
   .ant-layout-has-sider > .ant-layout {
     margin-left: 0 !important; /* Override push margin */
+  }
+}
+
+@media (max-width: 768px) {
+  .cards-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    align-items: center;
+    position: absolute;
+    top: 10px;
+    left: 0;
+    z-index: 2000;
+  }
+
+  /* Override absolute positioning by force */
+  .cards-wrapper > div > * {
+    position: static !important;
+    width: 90% !important;
+    margin: 0 auto !important;
+  }
+
+  .left-card-wrapper, .right-card-wrapper{
+    width: 250px;
   }
 }

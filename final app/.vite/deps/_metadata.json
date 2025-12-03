@@ -1,0 +1,103 @@
+{
+  "hash": "21be1edb",
+  "configHash": "85455410",
+  "lockfileHash": "73df391a",
+  "browserHash": "521036eb",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "991e9e42",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "aca6a56a",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "065cc848",
+      "needsInterop": false
+    },
+    "@ant-design/v5-patch-for-react-19": {
+      "src": "../../node_modules/@ant-design/v5-patch-for-react-19/es/index.js",
+      "file": "@ant-design_v5-patch-for-react-19.js",
+      "fileHash": "9a25226d",
+      "needsInterop": false
+    },
+    "antd": {
+      "src": "../../node_modules/antd/es/index.js",
+      "file": "antd.js",
+      "fileHash": "6f9b82a9",
+      "needsInterop": false
+    },
+    "axios": {
+      "src": "../../node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "1b741834",
+      "needsInterop": false
+    },
+    "@ant-design/icons": {
+      "src": "../../node_modules/@ant-design/icons/es/index.js",
+      "file": "@ant-design_icons.js",
+      "fileHash": "6e94fd3d",
+      "needsInterop": false
+    },
+    "react-map-gl": {
+      "src": "../../node_modules/react-map-gl/dist/esm/index.js",
+      "file": "react-map-gl.js",
+      "fileHash": "93ea03f0",
+      "needsInterop": false
+    },
+    "@mapbox/mapbox-gl-draw": {
+      "src": "../../node_modules/@mapbox/mapbox-gl-draw/index.js",
+      "file": "@mapbox_mapbox-gl-draw.js",
+      "fileHash": "e7bad3a7",
+      "needsInterop": false
+    },
+    "mapbox-gl-draw-geodesic": {
+      "src": "../../node_modules/mapbox-gl-draw-geodesic/dist/mapbox-gl-draw-geodesic.esm.js",
+      "file": "mapbox-gl-draw-geodesic.js",
+      "fileHash": "6662455d",
+      "needsInterop": false
+    },
+    "@turf/turf": {
+      "src": "../../node_modules/@turf/turf/dist/esm/index.js",
+      "file": "@turf_turf.js",
+      "fileHash": "b61a07fd",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-KS5GD76W": {
+      "file": "chunk-KS5GD76W.js"
+    },
+    "chunk-7WLGYQZ4": {
+      "file": "chunk-7WLGYQZ4.js"
+    },
+    "mapbox-gl-FAR45GA5": {
+      "file": "mapbox-gl-FAR45GA5.js"
+    },
+    "chunk-OF6LXU6S": {
+      "file": "chunk-OF6LXU6S.js"
+    },
+    "chunk-PH4ZOQGD": {
+      "file": "chunk-PH4ZOQGD.js"
+    },
+    "chunk-CDGRQO3C": {
+      "file": "chunk-CDGRQO3C.js"
+    },
+    "chunk-BSFGFYY7": {
+      "file": "chunk-BSFGFYY7.js"
+    },
+    "chunk-5I2J475C": {
+      "file": "chunk-5I2J475C.js"
+    },
+    "chunk-V4OQ3NZ2": {
+      "file": "chunk-V4OQ3NZ2.js"
+    }
+  }
+}
