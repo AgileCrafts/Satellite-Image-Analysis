@@ -4,6 +4,8 @@ import CustomSearch from "./CustomSearch";
 import RangeSelector from "./RangeSelector";
 import SortFilterDropdown from "./SortAndFilter";
 
+
+
 export default function CustomizeSection(){
     return(
         <div 
@@ -35,6 +37,7 @@ export default function CustomizeSection(){
             <div  style={{display:"flex", justifyContent:"space-between"}}>
                 <Button style={{marginRight:"5px"}}>Select Area</Button>
                 <Button>Markdown</Button>
+
             </div>
         </div>
     );

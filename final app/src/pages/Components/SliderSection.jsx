@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Segmented, DatePicker, Space, Slider } from "antd";
+import { Segmented, DatePicker, Space, Slider, Button } from "antd";
 import {PlaySquareFilled } from "@ant-design/icons";
 import CustomSlider from "./CustomSlider";
 import TimeSlider from "./CustomSlider";
@@ -28,7 +28,7 @@ const SliderSection = () => {
               display:"flex",
               flexDirection:"column",
               position: 'absolute',
-              bottom: '8rem',
+              bottom: '5.6rem',
               left: '1rem',
               zIndex: 1000,
               background: 'transparent',
@@ -42,16 +42,14 @@ const SliderSection = () => {
         style={{
           display:"flex",
           width:"300px",
-          height:"4px",
-          marginBottom:"40px",
-          backgroundColor:"white"
+          height:"2rem",
         }}>
           {/* Segmented selection */}
           <Segmented
             options={["Weekly", "Monthly", "Yearly", "Custom"]}
             value={selectedOption}
             onChange={handleSegmentChange}
-            style={{ marginBottom: 20 }}
+            style={{ marginBottom: 20, backgroundColor:"lightgrey",height:"2rem", }}
           />
 
           {/* Show RangePicker only for Custom */}
@@ -71,10 +69,12 @@ const SliderSection = () => {
             justifyContent:"center",
             alignItems:"center",
             width:"1500px",
-            height:"60px",
-            backgroundColor:"white"
+            height:"64px",
+            backgroundColor:"white",
           }}>
-            <PlaySquareFilled style={{fontSize:"45px", color:"blue"}}/>
+            <Button style={{ width: "45px", height:"45px", padding: "0" }}>
+                <PlaySquareFilled style={{ fontSize:"45px",color: "blue" }} />
+            </Button>
             <TimeSlider/>
           </div>
     </div>
