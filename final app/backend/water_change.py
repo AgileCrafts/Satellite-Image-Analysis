@@ -11,6 +11,7 @@ import json
 from PIL import Image
 import rasterio
 from rasterio.transform import from_bounds
+# from rasterio.wrap import transform_geom
 
 # ---------------- LOAD 5-BAND GEOTIFF ----------------
 def load_s2_tiff_riox(tiff_bytes):

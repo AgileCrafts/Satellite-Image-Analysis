@@ -2,165 +2,210 @@ import React, { useState, useRef } from "react";
 import { Slider, Button } from "antd";
 import "antd/dist/reset.css";
 
-const TimeSlider = () => {
+const TimeSlider = ({onDatesChange}) => {
 
   const marks = {
-  0: "2015",
-  1: "Jan 2015",
-  2: "Feb 2015",
-  3: "Mar 2015",
-  4: "Apr 2015",
-  5: "May 2015",
-  6: "Jun 2015",
-  7: "Jul 2015",
-  8: "Aug 2015",
-  9: "Sep 2015",
-  10: "Oct 2015",
-  11: "Nov 2015",
-  12: "Dec 2015",
+//   0: "2015",
+//   1: "Jan 2015",
+//   2: "Feb 2015",
+//   3: "Mar 2015",
+//   4: "Apr 2015",
+//   5: "May 2015",
+//   6: "Jun 2015",
+//   7: "Jul 2015",
+//   8: "Aug 2015",
+//   9: "Sep 2015",
+//   10: "Oct 2015",
+//   11: "Nov 2015",
+//   12: "Dec 2015",
   
-  13: "2016",
-  14: "Jan 2016",
-  15: "Feb 2016",
-  16: "Mar 2016",
-  17: "Apr 2016",
-  18: "May 2016",
-  19: "Jun 2016",
-  20: "Jul 2016",
-  21: "Aug 2016",
-  22: "Sep 2016",
-  23: "Oct 2016",
-  24: "Nov 2016",
-  25: "Dec 2016",
+//   13: "2016",
+//   14: "Jan 2016",
+//   15: "Feb 2016",
+//   16: "Mar 2016",
+//   17: "Apr 2016",
+//   18: "May 2016",
+//   19: "Jun 2016",
+//   20: "Jul 2016",
+//   21: "Aug 2016",
+//   22: "Sep 2016",
+//   23: "Oct 2016",
+//   24: "Nov 2016",
+//   25: "Dec 2016",
 
-  26: "2017",
-  27: "Jan 2017",
-  28: "Feb 2017",
-  29: "Mar 2017",
-  30: "Apr 2017",
-  31: "May 2017",
-  32: "Jun 2017",
-  33: "Jul 2017",
-  34: "Aug 2017",
-  35: "Sep 2017",
-  36: "Oct 2017",
-  37: "Nov 2017",
-  38: "Dec 2017",
+//   26: "2017",
+//   27: "Jan 2017",
+//   28: "Feb 2017",
+//   29: "Mar 2017",
+//   30: "Apr 2017",
+//   31: "May 2017",
+//   32: "Jun 2017",
+//   33: "Jul 2017",
+//   34: "Aug 2017",
+//   35: "Sep 2017",
+//   36: "Oct 2017",
+//   37: "Nov 2017",
+//   38: "Dec 2017",
 
-  39: "2018",
-  40: "Jan 2018",
-  41: "Feb 2018",
-  42: "Mar 2018",
-  43: "Apr 2018",
-  44: "May 2018",
-  45: "Jun 2018",
-  46: "Jul 2018",
-  47: "Aug 2018",
-  48: "Sep 2018",
-  49: "Oct 2018",
-  50: "Nov 2018",
-  51: "Dec 2018",
+//   39: "2018",
+//   40: "Jan 2018",
+//   41: "Feb 2018",
+//   42: "Mar 2018",
+//   43: "Apr 2018",
+//   44: "May 2018",
+//   45: "Jun 2018",
+//   46: "Jul 2018",
+//   47: "Aug 2018",
+//   48: "Sep 2018",
+//   49: "Oct 2018",
+//   50: "Nov 2018",
+//   51: "Dec 2018",
 
-  52: "2019",
-  53: "Jan 2019",
-  54: "Feb 2019",
-  55: "Mar 2019",
-  56: "Apr 2019",
-  57: "May 2019",
-  58: "Jun 2019",
-  59: "Jul 2019",
-  60: "Aug 2019",
-  61: "Sep 2019",
-  62: "Oct 2019",
-  63: "Nov 2019",
-  64: "Dec 2019",
+//   52: "2019",
+//   53: "Jan 2019",
+//   54: "Feb 2019",
+//   55: "Mar 2019",
+//   56: "Apr 2019",
+//   57: "May 2019",
+//   58: "Jun 2019",
+//   59: "Jul 2019",
+//   60: "Aug 2019",
+//   61: "Sep 2019",
+//   62: "Oct 2019",
+//   63: "Nov 2019",
+//   64: "Dec 2019",
 
-  65: "2020",
-  66: "Jan 2020",
-  67: "Feb 2020",
-  68: "Mar 2020",
-  69: "Apr 2020",
-  70: "May 2020",
-  71: "Jun 2020",
-  72: "Jul 2020",
-  73: "Aug 2020",
-  74: "Sep 2020",
-  75: "Oct 2020",
-  76: "Nov 2020",
-  77: "Dec 2020",
+//   65: "2020",
+//   66: "Jan 2020",
+//   67: "Feb 2020",
+//   68: "Mar 2020",
+//   69: "Apr 2020",
+//   70: "May 2020",
+//   71: "Jun 2020",
+//   72: "Jul 2020",
+//   73: "Aug 2020",
+//   74: "Sep 2020",
+//   75: "Oct 2020",
+//   76: "Nov 2020",
+//   77: "Dec 2020",
 
-  78: "2021",
-  79: "Jan 2021",
-  80: "Feb 2021",
-  81: "Mar 2021",
-  82: "Apr 2021",
-  83: "May 2021",
-  84: "Jun 2021",
-  85: "Jul 2021",
-  86: "Aug 2021",
-  87: "Sep 2021",
-  88: "Oct 2021",
-  89: "Nov 2021",
-  90: "Dec 2021",
+//   78: "2021",
+//   79: "Jan 2021",
+//   80: "Feb 2021",
+//   81: "Mar 2021",
+//   82: "Apr 2021",
+//   83: "May 2021",
+//   84: "Jun 2021",
+//   85: "Jul 2021",
+//   86: "Aug 2021",
+//   87: "Sep 2021",
+//   88: "Oct 2021",
+//   89: "Nov 2021",
+//   90: "Dec 2021",
 
-  91: "2022",
-  92: "Jan 2022",
-  93: "Feb 2022",
-  94: "Mar 2022",
-  95: "Apr 2022",
-  96: "May 2022",
-  97: "Jun 2022",
-  98: "Jul 2022",
-  99: "Aug 2022",
-  100: "Sep 2022",
-  101: "Oct 2022",
-  102: "Nov 2022",
-  103: "Dec 2022",
+//   91: "2022",
+//   92: "Jan 2022",
+//   93: "Feb 2022",
+//   94: "Mar 2022",
+//   95: "Apr 2022",
+//   96: "May 2022",
+//   97: "Jun 2022",
+//   98: "Jul 2022",
+//   99: "Aug 2022",
+//   100: "Sep 2022",
+//   101: "Oct 2022",
+//   102: "Nov 2022",
+//   103: "Dec 2022",
 
-  104: "2023",
-  105: "Jan 2023",
-  106: "Feb 2023",
-  107: "Mar 2023",
-  108: "Apr 2023",
-  109: "May 2023",
-  110: "Jun 2023",
-  111: "Jul 2023",
-  112: "Aug 2023",
-  113: "Sep 2023",
-  114: "Oct 2023",
-  115: "Nov 2023",
-  116: "Dec 2023",
+//   104: "2023",
+//   105: "Jan 2023",
+//   106: "Feb 2023",
+//   107: "Mar 2023",
+//   108: "Apr 2023",
+//   109: "May 2023",
+//   110: "Jun 2023",
+//   111: "Jul 2023",
+//   112: "Aug 2023",
+//   113: "Sep 2023",
+//   114: "Oct 2023",
+//   115: "Nov 2023",
+//   116: "Dec 2023",
 
-  117: "2024",
-  118: "Jan 2024",
-  119: "Feb 2024",
-  120: "Mar 2024",
-  121: "Apr 2024",
-  122: "May 2024",
-  123: "Jun 2024",
-  124: "Jul 2024",
-  125: "Aug 2024",
-  126: "Sep 2024",
-  127: "Oct 2024",
-  128: "Nov 2024",
-  129: "Dec 2024",
+//   117: "2024",
+//   118: "Jan 2024",
+//   119: "Feb 2024",
+//   120: "Mar 2024",
+//   121: "Apr 2024",
+//   122: "May 2024",
+//   123: "Jun 2024",
+//   124: "Jul 2024",
+//   125: "Aug 2024",
+//   126: "Sep 2024",
+//   127: "Oct 2024",
+//   128: "Nov 2024",
+//   129: "Dec 2024",
 
-  130: "2025",
-  131: "Jan 2025",
-  132: "Feb 2025",
-  133: "Mar 2025",
-  134: "Apr 2025",
-  135: "May 2025",
-  136: "Jun 2025",
-  137: "Jul 2025",
-  138: "Aug 2025",
-  139: "Sep 2025",
-  140: "Oct 2025",
-  141: "Nov 2025",
-  142: "Dec 2025",
-};
+//   130: "2025",
+//   131: "Jan 2025",
+//   132: "Feb 2025",
+//   133: "Mar 2025",
+//   134: "Apr 2025",
+//   135: "May 2025",
+//   136: "Jun 2025",
+//   137: "Jul 2025",
+//   138: "Aug 2025",
+//   139: "Sep 2025",
+//   140: "Oct 2025",
+//   141: "Nov 2025",
+//   142: "Dec 2025",
+  0: "2016",
+  1: "mid 2016",
+  2: "2017",
+  3: "mid 2017",
+  4: "2018",
+  5: "mid 2018",
+  6: "2019",
+  7: "mid 2019",
+  8: "2020",
+  9: "mid 2020",
+  10: "2021",
+  11: "mid 2021",
+  12: "2022",
+  13: "mid 2022",
+  14: "2023",
+  15: "mid 2023",
+  16: "2024",
+  17: "mid 2024",
+  18: "2025",
+  19: "mid 2025"
 
-  const [range, setRange] = useState([4, 16]);
+ };
+
+
+ const sliderDates = {
+    0: "2016-01-18",
+    1: "2016-10-24",
+    2: "2017-01-02",
+    3: "2017-05-02",
+    4: "2018-01-22",
+    5: "2018-05-12",
+    6: "2019-01-02",
+    7: "2019-09-19",
+    8: "2020-01-17",
+    9: "2020-10-28",
+    10: "2021-01-06",
+    11: "2021-05-01",
+    12: "2022-01-01",
+    13: "2022-10-28",
+    14: "2023-01-11",
+    15: "2023-06-05",
+    16: "2024-01-06",
+    17: "2024-10-22",
+    18: "2025-01-15",
+    19: "2025-06-29"
+  };
+
+  const [range, setRange] = useState([0, 16]);
 
   // Create a reference for the slider wrapper (this will help us control scroll position)
   const sliderWrapperRef = useRef(null);
@@ -169,6 +214,26 @@ const TimeSlider = () => {
     setRange(value);
     console.log("Selected range:", value.map((v) => marks[v]));
   };
+
+
+  const getSelectedDatesFromSlider = (range) => {
+
+    
+    return {
+      pre_date: sliderDates[range[0]],
+      post_date: sliderDates[range[1]]
+    };
+  };
+
+  const sendDatesToParent = () => {
+    const { pre_date, post_date } = getSelectedDatesFromSlider(range);
+    
+    console.log(pre_date);
+    console.log(post_date);
+
+    onDatesChange(pre_date, post_date);
+  };
+
 
   // Scroll the slider to the left
   const scrollLeft = () => {
@@ -194,7 +259,7 @@ const TimeSlider = () => {
   const customMarks = Object.keys(marks).reduce((acc, key) => {
     const index = parseInt(key);
 
-    if (index % 13 === 0) {
+    if (index % 2 === 0) {
       // Show text below year marks divisible by 5 (like 2015, 2020, etc.)
       acc[index] = marks[key];
     } else {
@@ -207,7 +272,7 @@ const TimeSlider = () => {
   return (
     <div style={{ position: "relative", width: "100%", margin: "50px auto" }}>
       {/* Left Button */}
-      <Button
+      {/* <Button
         style={{
           position: "absolute",
           left: 0,
@@ -218,10 +283,10 @@ const TimeSlider = () => {
         onClick={scrollLeft}
       >
         ←
-      </Button>
+      </Button> */}
 
       {/* Right Button */}
-      <Button
+      {/* <Button
         style={{
           position: "absolute",
           right: 0,
@@ -232,7 +297,7 @@ const TimeSlider = () => {
         onClick={scrollRight}
       >
         →
-      </Button>
+      </Button> */}
 
       {/* Slider Container */}
       <div
@@ -247,17 +312,19 @@ const TimeSlider = () => {
         <Slider
           range
           min={0}
-          max={142}
+          max={19}
           step={null}
           marks={customMarks}
           defaultValue={range}
           onChange={onChange}
+          onChangeComplete={() => sendDatesToParent()}
           tooltip={{
             visible: true,
             formatter: tooltipFormatter,
           }}
           style={{
-            width: "5000px", // Make the slider's width large enough to fit all marks
+            // width: "5000px", // Make the slider's width large enough to fit all marks
+            width:"1200px",
             display: "inline-block",
             margin:"0px 50px"
           }}

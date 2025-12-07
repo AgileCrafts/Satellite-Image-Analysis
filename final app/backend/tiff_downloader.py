@@ -45,7 +45,7 @@ def get_token(username, password):
         raise
 
 # ---------------- EXACT SAME SCENE SEARCH AS YOUR RGB DOWNLOADER ----------------
-def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=120):
+def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=12):
     if datetime.now().timestamp() > token_data["expires_at"]:
         print("Token expired → refreshing")
         token_data = get_token(cfg["username"], cfg["password"])
@@ -218,15 +218,15 @@ def download_ndwi_period():
     folder = cfg.get("download_folder", "ndwi_geotiffs")
     os.makedirs(folder, exist_ok=True)
 
-    start_date = datetime(2020, 1, 1).date()
-    end_date   = datetime(2025, 1, 2).date()
+    start_date = datetime(2025, 1, 1).date()
+    end_date   = datetime(2025, 11, 30).date()
     current = start_date
 
     print(f"Starting NDWI GeoTIFF download (June–Sep 2025)\n")
 
     while current <= end_date:
         target_date = current
-        current += timedelta(days=1800)
+        current += timedelta(days=15)
 
         print(f"\nDownloading NDWI for target date: {target_date}")
         print(f"BBox: {bbox}\n")

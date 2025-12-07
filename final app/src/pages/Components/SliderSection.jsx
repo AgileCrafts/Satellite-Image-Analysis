@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import '@ant-design/v5-patch-for-react-19';
 import { Segmented, DatePicker, Space, Button, Row, Col, Modal } from "antd";
-import { PlaySquareFilled } from "@ant-design/icons";
+import { PlaySquareFilled, FullscreenOutlined, FullscreenExitOutlined } from "@ant-design/icons";
 
 import TimeSlider from "./CustomSlider";
 const { RangePicker } = DatePicker;
 
-const SliderSection = () => {
+const SliderSection = ({onDatesChange, selectedPort}) => {
   const [selectedOption, setSelectedOption] = useState("Weekly");
   const [dateRange, setDateRange] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false); //for modal expansion
 
 
   const handleSegmentChange = (value) => {
@@ -28,10 +29,16 @@ const SliderSection = () => {
 
   const handleModalClose = () => {
     setIsModalVisible(false); // Close the modal
+    setIsFullscreen(false);
   };
 
   const handleModalOpen = () => {
     setIsModalVisible(true); // Open the modal
+  };
+
+  //for modal expansion
+   const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
   };
 
   return (
@@ -121,12 +128,12 @@ const SliderSection = () => {
         >
           <PlaySquareFilled style={{ fontSize: "45px", color: "blue" }} />
         </Button>
-        <TimeSlider />
+        <TimeSlider onDatesChange={onDatesChange}/>
       </div>
 
 
         {/* GIF Modal */}
-      <Modal
+      {/* <Modal
         title="GIF on changes over time"
         open={isModalVisible}
         onCancel={handleModalClose}
@@ -139,6 +146,65 @@ const SliderSection = () => {
           alt="GIF"
           style={{ width: "100%" }}
         />
+      </Modal> */}
+      <Modal
+
+          title={
+            <div
+              style={{
+                position: "relative",          // allow absolute child inside header
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+                paddingRight: "64px"          // give space for our button + built-in close icon
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>GIF on changes over time</span>
+
+              {/* Expand / Shrink Button placed absolutely so it lines up with the Close button */}
+              <button
+                onClick={toggleFullscreen}
+                aria-label={isFullscreen ? "Shrink" : "Expand"}
+                style={{
+                  position: "absolute",
+                  right: "15px",              // distance from right edge — tuned to align with close button
+                  top: "30%",
+                  transform: "translateY(-50%)",
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                  borderRadius: 4,
+                  boxShadow: "none",
+                  fontSize: 14,
+                }}
+              >
+                {isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+              </button>
+            </div>
+          }
+
+          open={isModalVisible}
+          onCancel={handleModalClose}
+          footer={null}
+          width={isFullscreen ? "100%" : 800}
+          zIndex={9999999}
+          bodyStyle={{ padding: 0 }}
+          style={{ top: 0, height: isFullscreen ? "400px" : "auto" }}
+        >
+          {/* modal body: remove the previous Expand/Shrink button from body */}
+          <div style={{ textAlign: "center" }}>
+            <img src="backend/output.gif" alt="GIF" style={{ width: "100%" }} />
+          </div>
+
+
+
+        {/* Fullscreen Toggle Button */}
+        {/* <div style={{ marginTop: 16, textAlign: "center"}}>
+          <Button onClick={toggleFullscreen} style={{ marginRight: 10 }}>
+            {isFullscreen ? "Shrink" : "Expand"}
+          </Button>
+        </div> */}
       </Modal>
 
     </div>

@@ -3,9 +3,9 @@
     "password": "6)D3tXmU5GSvSVQ",
     "sh_base_url": "https://sh.dataspace.copernicus.eu",
     "sh_token_url": "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token",
-    "bbox":[90.50183061170463, 23.564356390973032, 90.53536605820631, 23.579282107830622],
-    "download_folder": "tiff_images",
-    "max_cloud_coverage": 20,
+    "bbox":[90.322893, 23.759074, 90.360834, 23.777213],
+    "download_folder": "2_rgb_images",
+    "max_cloud_coverage": 100,
     "resolution": 10,
     "output_format": "jpg"
 }

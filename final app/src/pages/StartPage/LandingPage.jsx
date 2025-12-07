@@ -18,6 +18,11 @@ export default function LandingPage() {
   landmarks: false
   });
 
+  const [sliderDates, setSliderDates] = useState({
+  pre_date: "2020-01-17",
+  post_date: "2024-01-06"
+});
+
   // handler to update legend from Header
   const handleLegendChange = (changes) => {
     setLegend((prev) => ({ ...prev, ...changes }));
@@ -28,15 +33,36 @@ export default function LandingPage() {
     setMapStyle(`mapbox://styles/mapbox/${styleKey}`);
   };
 
+  const handleSliderDates = async (pre_date, post_date) => {
+
+  setSliderDates({ pre_date, post_date });
+
+  if (selectedPort) {
+    const url = `http://localhost:8000/analyze-water-change/${selectedPort.id}?pre_date=${pre_date}&post_date=${post_date}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.error) {
+      setWaterChangeData(data.lost_water_geojson);
+      setLostArea(data.lost_area_ha);
+    }
+  }
+};
+
 
   const handlePortClick = async (port) => {
     setSelectedPort(port); // keep map centered on port
     setWaterChangeData(null); // reset previous data
     setLostArea(null);
+    const { pre_date, post_date } = sliderDates;
 
     try {
-      const res = await fetch(`http://localhost:8000/analyze-water-change/${port.id}`);
-      const data = await res.json();
+      const res = await fetch(
+    `http://localhost:8000/analyze-water-change/${port.id}?pre_date=${pre_date}&post_date=${post_date}`
+  );
+
+  const data = await res.json();
 
       if (data.error) {
         console.error(data.error);
@@ -63,7 +89,7 @@ export default function LandingPage() {
         position: "relative"
     }}>
 
-      <MagPage mapStyle={mapStyle} legend={legend} selectedPort={selectedPort} waterChangeData={waterChangeData}/>
+      <MagPage mapStyle={mapStyle} legend={legend} selectedPort={selectedPort} waterChangeData={waterChangeData} lostArea={lostArea}/>
 
       <div>
         <Header onMapTypeChange={handleMapTypeChange}
@@ -112,7 +138,7 @@ export default function LandingPage() {
               width: "98%",   
             }}
           >
-            <SliderSection />
+            <SliderSection onDatesChange={handleSliderDates} selectedPort={selectedPort}/>
         </div>
         
         

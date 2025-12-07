@@ -18,7 +18,7 @@ const LogoSection = () => {
 
       }}
     >
-      <img src="src\assets\logo.png" style={{height:"48px", width:"48px"}}></img>
+      <img src="images\logo.png" style={{height:"48px", width:"48px"}}></img>
       <h6 style={{fontSize:"0.9rem", margin:0}}>River Encroachment  Monitoring & Simulation System</h6>
     </div>
   );

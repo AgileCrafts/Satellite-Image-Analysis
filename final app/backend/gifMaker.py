@@ -34,5 +34,5 @@ for file in image_files:
     images.append(image)
 
 # Save as GIF (using the first image and appending the rest)
-images[0].save('output.gif', save_all=True, append_images=images[1:], duration=500, loop=0)
+images[0].save('output.gif', save_all=True, append_images=images[1:], duration=400, loop=0)
 

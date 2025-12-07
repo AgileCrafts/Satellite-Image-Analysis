@@ -69,8 +69,8 @@ const Enchroachments = ({lostArea, selectedPort}) => {
               <ConfigProvider wave={{disabled: true}}>
                  <Button variant="solid" 
                  onClick={() => {
-                        const url = `https://earth.google.com/web/search/${selectedPort.latitude},${selectedPort.longitude}`;
-                        window.open(url, '_blank');  
+                        const url = `https://www.google.com/maps?q=${selectedPort.latitude},${selectedPort.longitude}&hl=es;z=14&output=embed`;
+                        window.open(url, '_blank');    
                       }}
                  >
                   

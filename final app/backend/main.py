@@ -162,7 +162,7 @@ def get_ports_by_region(region: str, db: Session = Depends(get_db)):
 
 # ---------------- ANALYZE WATER CHANGE ----------------
 @app.get("/analyze-water-change/{port_id}")
-def analyze_water_change_for_port(port_id: int, db: Session = Depends(get_db)):
+def analyze_water_change_for_port(port_id: int, pre_date: str, post_date: str, db: Session = Depends(get_db)):
     """
     Given a port ID, gets its bbox from DB, downloads pre/post images for the specified dates,
     then runs water change analysis and returns results.
@@ -176,17 +176,36 @@ def analyze_water_change_for_port(port_id: int, db: Session = Depends(get_db)):
         return {"error": "Invalid bbox in port record"}
 
 
-    pre_date="2020-03-01"
-    post_date="2025-03-01"
+    # pre_date="2020-03-01"
+    # post_date="2025-03-01"
     
-    # Download images as bytes (pre/post)
-    pre_bytes = download_images(pre_date, bbox, port_id)
-    post_bytes = download_images(post_date, bbox, port_id)
 
-    if not pre_bytes or not post_bytes:
-        return {"error": "Failed to download pre/post images"}
+    
+    
+    
+    # # Download images as bytes (pre/post)
+    # pre_bytes = download_images(pre_date, bbox, port_id)
+    # post_bytes = download_images(post_date, bbox, port_id)
+
+    # if not pre_bytes or not post_bytes:
+    #     return {"error": "Failed to download pre/post images"}
 
     # Run water change analysis
+    
+     # ---- YOUR REAL LOGIC HERE ----
+    pre_path = f"{port_id}_tiff_images/NDWI_5band_{pre_date}.tif"
+    post_path = f"{port_id}_tiff_images/NDWI_5band_{post_date}.tif"
+    
+    print(pre_path)
+    print(post_path)
+    
+    with open(pre_path, "rb") as f:
+        pre_bytes = f.read()
+    with open(post_path, "rb") as f:
+        post_bytes = f.read()
+
+    
+    
     result = analyze_water_change(pre_bytes, post_bytes, output_dir="output" )
 
     # return {

@@ -74,7 +74,7 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
                 <label htmlFor="default" className="radio-label">
                 <div className="image-container">
                     <img
-                    src="/src/assets/map_streets.png"
+                    src="images\map_streets.png"
                     alt="Streets"
                     className="radio-image"
                     />
@@ -93,7 +93,7 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
                 <label htmlFor="satellitev11" className="radio-label">
                 <div className="image-container">
                     <img
-                    src="/src/assets/map_satellite.png"
+                    src="images\map_satellite.png"
                     alt="Satellite"
                     className="radio-image"
                     />

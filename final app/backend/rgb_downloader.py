@@ -59,7 +59,7 @@ def get_token(username, password):
         raise
 
 # ---------------- YOUR ORIGINAL WORKING SCENE SEARCH (unchanged) ----------------
-def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=15):
+def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=12):
     token = token_data["access_token"]
     headers = {
         "Authorization": f"Bearer {token}",
@@ -76,7 +76,7 @@ def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=15
         "datetime": f"{start}/{end}",
         "filter": {
             "op": "<",
-            "args": [{"property": "eo:cloud_cover"}, cfg.get("max_cloud_coverage", 100)]
+            "args": [{"property": "eo:cloud_cover"}, cfg.get("max_cloud_coverage", 20)]
         },
         "limit": 20
     }
@@ -104,7 +104,7 @@ def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=15
             "box": f"{minx},{miny},{maxx},{maxy}",
             "startDate": start[:10],
             "completionDate": end[:10],
-            "cloudCover": f"[0,{cfg.get('max_cloud_coverage', 100)}]",
+            "cloudCover": "[0,20]",
             "productType": "S2MSI2A",
             "maxRecords": 50
         }
@@ -150,22 +150,22 @@ def download_rgb_only(scene, bbox, token, target_date, folder):
 
         # Same size logic as your working script
         # width, height = bbox_to_pixels(bbox)
-        # scale_factor = 100000  # try increasing/decreasing this
+        scale_factor = 100000  # try increasing/decreasing this
     
-        # xwidth=(bbox[2] - bbox[0])
-        # yheight=(bbox[3] - bbox[1])
+        xwidth=(bbox[2] - bbox[0])
+        yheight=(bbox[3] - bbox[1])
         
-        # rratio=xwidth/yheight
+        rratio=xwidth/yheight
 
-        # width = int(xwidth * scale_factor)
-        # height = int(yheight * scale_factor)
+        width = int(xwidth * scale_factor)
+        height = int(yheight * scale_factor)
         
-        # width = min(1300, width)
-        # height = min(int(1300/rratio), height)
+        width = min(1300, width)
+        height = min(int(1300/rratio), height)
         
         
-        # print(width)
-        # print(height)
+        print(width)
+        print(height)
 
         evalscript = """
         //VERSION=3
@@ -186,8 +186,8 @@ def download_rgb_only(scene, bbox, token, target_date, folder):
                 }]
             },
             "output": {
-                # "width": width,
-                # "height": height,
+                "width": width,
+                "height": height,
                 "responses": [{"identifier": "default", "format": {"type": "image/tiff"}}]
             },
             "evalscript": evalscript
@@ -246,14 +246,14 @@ def download_one_rgb_image():
     #     return
     
 
-    start_date = datetime(2020, 1, 17).date()
-    end_date   = datetime(2020, 1, 17).date()
+    start_date = datetime(2016, 1, 1).date()
+    end_date   = datetime(2025, 1, 1).date()
     # end_date   = start_date
 
     current = start_date
     while current <= end_date:
         
-        target_date = current # ← June 5, 2023 (usually has good clear images)
+        target_date = current 
         current += timedelta(days=15)
         print(f"\nDownloading RGB for target date: {target_date}")
         print(f"BBox: {bbox}\n")
