@@ -86,13 +86,19 @@
 #     view_water_analysis_and_collage(change_map_id)
 
 
-from PIL import Image
-import numpy as np
+# from PIL import Image
+# import numpy as np
 
-from PIL import Image
+# from PIL import Image
 
-# Open the TIFF image
-image = Image.open("lost_water_mask.tif")
-image.show()
+# # Open the TIFF image
+# image = Image.open("lost_water_mask.tif")
+# image.show()
 
+import rasterio
 
+# Open the GeoTIFF file
+with rasterio.open('lost_water_mask.tif') as dataset:
+    # Get the CRS (Coordinate Reference System)
+    crs = dataset.crs
+    print(f"CRS: {crs}")

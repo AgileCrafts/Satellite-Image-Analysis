@@ -205,7 +205,7 @@ const TimeSlider = () => {
   }, {});
 
   return (
-    <div style={{ position: "relative", width: "1450px", margin: "50px auto" }}>
+    <div style={{ position: "relative", width: "100%", margin: "50px auto" }}>
       {/* Left Button */}
       <Button
         style={{

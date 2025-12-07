@@ -27,7 +27,7 @@ export default function CustomizeSection(){
             <div>
                 <CustomSearch/>
             </div>
-            <Divider type="vertical" style={{height:"40px", borderColor:"lightgrey"}}/>
+            {/* <Divider type="vertical" style={{height:"40px", borderColor:"lightgrey"}}/>
 
             <div>
                 <SortFilterDropdown/>
@@ -38,7 +38,7 @@ export default function CustomizeSection(){
                 <Button style={{marginRight:"5px"}}>Select Area</Button>
                 <Button>Markdown</Button>
 
-            </div>
+            </div> */}
         </div>
     );
 }

@@ -21,7 +21,7 @@ const SortFilterDropdown = () => {
       menu={{ items: filterItems, onClick: handleSelect }}
       placement="bottomLeft"
       trigger={["click"]}
-      
+      getPopupContainer={(triggerNode) => triggerNode.parentNode}
     >
      <Button style={{ width: 120 }}>
         Sort & Filter <DownOutlined style={{ marginLeft: 8 }}/>

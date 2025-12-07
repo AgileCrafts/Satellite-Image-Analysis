@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import MagPage from "../Components/MapPage.jsx";
 import CollapsibleCard from "../Components/CollapsibleCard.jsx";
-import Header from "../Components/Header.jsx";
+import Header from "../Components/Header2.jsx";
 import { Button } from 'antd';
 import DropwdownCustom from "../Components/DropdownCustom.jsx";
 import Enchroachments from "../Components/Encroachments.jsx";
@@ -9,6 +9,9 @@ import SliderSection from "../Components/SliderSection.jsx";
 
 export default function LandingPage() {
   const [mapStyle, setMapStyle] = useState("mapbox://styles/mapbox/streets-v11");
+  const [selectedPort, setSelectedPort] = useState(null);
+  const [waterChangeData, setWaterChangeData] = useState(null);
+  const [lostArea, setLostArea] = useState(null);
 
   const [legend, setLegend] = useState({
   labels: false,
@@ -25,6 +28,32 @@ export default function LandingPage() {
     setMapStyle(`mapbox://styles/mapbox/${styleKey}`);
   };
 
+
+  const handlePortClick = async (port) => {
+    setSelectedPort(port); // keep map centered on port
+    setWaterChangeData(null); // reset previous data
+    setLostArea(null);
+
+    try {
+      const res = await fetch(`http://localhost:8000/analyze-water-change/${port.id}`);
+      const data = await res.json();
+
+      if (data.error) {
+        console.error(data.error);
+        setWaterChangeData(null);
+        setLostArea(null);
+      } else {
+        setWaterChangeData(data.lost_water_geojson);
+        setLostArea(data.lost_area_ha);
+      }
+    } catch (err) {
+      console.error("Failed to fetch water change analysis:", err);
+      setWaterChangeData(null);
+      setLostArea(null);
+    }
+  };
+
+
   return (
 
     <div
@@ -34,43 +63,58 @@ export default function LandingPage() {
         position: "relative"
     }}>
 
+      <MagPage mapStyle={mapStyle} legend={legend} selectedPort={selectedPort} waterChangeData={waterChangeData}/>
+
+      <div>
         <Header onMapTypeChange={handleMapTypeChange}
                 onLegendChange={handleLegendChange}
         />
+      </div>
 
+      <div>
         <CollapsibleCard title="PORTS" style={{
           position: 'absolute',
-          top: '15%',
-          right: '1rem',
+          marginTop: '8%',
+          right: '1%',
           zIndex: 2000,
           background: 'white',
           // padding: '10px',
           borderRadius: '6px',
-          width: '300px',
+          width: '20%',
           boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
         }}>
-        <DropwdownCustom/>
+        <DropwdownCustom onPortClick={handlePortClick}/>
         </CollapsibleCard>
     
      
         <CollapsibleCard title="ENCROACHMENT LIST" 
         style={{
           position: 'absolute',
-          top: '40%',
-          right: '1rem',
+          marginTop: '18%',
+          right: '1%',
           zIndex: 1000,
           background: 'white',
           // padding: '5px',
           borderRadius: '6px',
-          width: '300px',
+          width: '20%',
           boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
         }}>
 
-        <Enchroachments/>
+        <Enchroachments lostArea={lostArea} selectedPort={selectedPort}/>
         </CollapsibleCard>
-
-        <SliderSection/>
-        <MagPage mapStyle={mapStyle} legend={legend}/>
+        </div>
+        
+        <div
+            style={{
+              position: "absolute",
+              bottom: "2%",
+              zIndex: 1,
+              width: "98%",   
+            }}
+          >
+            <SliderSection />
+        </div>
+        
         
 
     </div>

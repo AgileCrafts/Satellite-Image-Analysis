@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { Segmented, DatePicker, Space, Slider, Button } from "antd";
-import {PlaySquareFilled } from "@ant-design/icons";
-import CustomSlider from "./CustomSlider";
+import '@ant-design/v5-patch-for-react-19';
+import { Segmented, DatePicker, Space, Button, Row, Col, Modal } from "antd";
+import { PlaySquareFilled } from "@ant-design/icons";
+
 import TimeSlider from "./CustomSlider";
 const { RangePicker } = DatePicker;
 
 const SliderSection = () => {
   const [selectedOption, setSelectedOption] = useState("Weekly");
   const [dateRange, setDateRange] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
 
   const handleSegmentChange = (value) => {
     setSelectedOption(value);
@@ -19,64 +22,125 @@ const SliderSection = () => {
   };
 
   const handleRangeChange = (value) => {
-    setDateRange(value); // value = [startDayjs, endDayjs]
+    setDateRange(value); 
+  };
+
+
+  const handleModalClose = () => {
+    setIsModalVisible(false); // Close the modal
+  };
+
+  const handleModalOpen = () => {
+    setIsModalVisible(true); // Open the modal
   };
 
   return (
     <div
-       style={{
-              display:"flex",
-              flexDirection:"column",
-              position: 'absolute',
-              bottom: '5.6rem',
-              left: '1rem',
-              zIndex: 1000,
-              background: 'transparent',
-              // padding: '5px',
-              borderRadius: '6px',
-              width: '1500px',
-              height:"2rem"
-        }}
+      style={{
+        position: "fixed", 
+        bottom: "1rem",        
+        left: 0,          
+        zIndex: 1000,
+        background: "transparent",
+        padding: "10px",  
+        width: "100%",    
+        display: "flex",
+        flexDirection: "column", 
+      }}
     >
-        <div 
-        style={{
-          display:"flex",
-          width:"300px",
-          height:"2rem",
-        }}>
-          {/* Segmented selection */}
+      {/* Upper portion with Segmented and RangePicker aligned to the left */}
+      <Row
+        gutter={[16, 16]} 
+        justify="start"  
+        style={{ display: "flex", alignItems: "center", width: "100%" }}
+      >
+        {/* Segmented selection */}
+        <Col
+          xs={24} sm={8} md={6} lg={6} xl={5}
+          style={{
+            display: "flex",
+            justifyContent: "flex-start", 
+            padding: "5px",
+          }}
+        >
           <Segmented
             options={["Weekly", "Monthly", "Yearly", "Custom"]}
             value={selectedOption}
             onChange={handleSegmentChange}
-            style={{ marginBottom: 20, backgroundColor:"lightgrey",height:"2rem", }}
+            style={{
+              width: "100%",
+              backgroundColor: "lightgrey",
+              borderRadius: "8px",
+            }}
           />
+        </Col>
 
-          {/* Show RangePicker only for Custom */}
-          {selectedOption === "Custom" && (
+        {/* Show RangePicker only for Custom */}
+        {selectedOption === "Custom" && (
+          <Col
+            xs={24} sm={16} md={12} lg={10} xl={8}
+            style={{
+              display: "flex",
+              justifyContent: "flex-start", 
+              padding: "5px",
+            }}
+          >
             <Space direction="vertical" size={20}>
               <RangePicker
                 format="YYYY-MM-DD"
                 value={dateRange}
                 onChange={handleRangeChange}
-                style={{ width: "250px" }}
+                style={{ width: "100%" }}
               />
             </Space>
-          )}
-          </div>
-          <div style={{
-            display:"flex",
-            justifyContent:"center",
-            alignItems:"center",
-            width:"1500px",
-            height:"64px",
-            backgroundColor:"white",
-          }}>
-            <Button style={{ width: "45px", height:"45px", padding: "0" }}>
-                <PlaySquareFilled style={{ fontSize:"45px",color: "blue" }} />
-            </Button>
-            <TimeSlider/>
-          </div>
+          </Col>
+        )}
+      </Row>
+
+      {/* Play Button and TimeSlider */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center", 
+          alignItems: "center",
+          width: "100%",
+          height: "64px",
+          backgroundColor: "white",
+          padding: "0 16px", 
+          marginTop: "16px", 
+        }}
+      >
+        <Button
+          style={{
+            width: "45px",
+            height: "45px",
+            padding: "0",
+            marginRight: "10px", 
+          }}
+          onClick={handleModalOpen}
+        >
+          <PlaySquareFilled style={{ fontSize: "45px", color: "blue" }} />
+        </Button>
+        <TimeSlider />
+      </div>
+
+
+        {/* GIF Modal */}
+      <Modal
+        title="GIF on changes over time"
+        open={isModalVisible}
+        onCancel={handleModalClose}
+        footer={null} 
+        width={800} 
+        zIndex={9999999}
+      >
+        <img
+          src="backend\output.gif" 
+          alt="GIF"
+          style={{ width: "100%" }}
+        />
+      </Modal>
+
     </div>
   );
 };

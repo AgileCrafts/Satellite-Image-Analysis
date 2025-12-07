@@ -199,8 +199,6 @@ def download_scene(scene_info, cfg, bbox, token, index, aoi_id: int, db: Session
     # height=512
     
     
-    
-    
     scale_factor = 100000  # try increasing/decreasing this
     
     xwidth=(bbox[2] - bbox[0])

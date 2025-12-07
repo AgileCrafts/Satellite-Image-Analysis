@@ -149,11 +149,23 @@ def download_rgb_only(scene, bbox, token, target_date, folder):
         time_interval = (f"{scene_date}T00:00:00Z", f"{scene_date}T23:59:59Z")
 
         # Same size logic as your working script
-        width, height = bbox_to_pixels(bbox)
+        # width, height = bbox_to_pixels(bbox)
+        # scale_factor = 100000  # try increasing/decreasing this
+    
+        # xwidth=(bbox[2] - bbox[0])
+        # yheight=(bbox[3] - bbox[1])
+        
+        # rratio=xwidth/yheight
+
+        # width = int(xwidth * scale_factor)
+        # height = int(yheight * scale_factor)
+        
+        # width = min(1300, width)
+        # height = min(int(1300/rratio), height)
         
         
-        print(width)
-        print(height)
+        # print(width)
+        # print(height)
 
         evalscript = """
         //VERSION=3
@@ -174,8 +186,8 @@ def download_rgb_only(scene, bbox, token, target_date, folder):
                 }]
             },
             "output": {
-                "width": width,
-                "height": height,
+                # "width": width,
+                # "height": height,
                 "responses": [{"identifier": "default", "format": {"type": "image/tiff"}}]
             },
             "evalscript": evalscript
@@ -234,8 +246,8 @@ def download_one_rgb_image():
     #     return
     
 
-    start_date = datetime(2025, 6, 1).date()
-    end_date   = datetime(2025, 9, 27).date()
+    start_date = datetime(2020, 1, 17).date()
+    end_date   = datetime(2020, 1, 17).date()
     # end_date   = start_date
 
     current = start_date

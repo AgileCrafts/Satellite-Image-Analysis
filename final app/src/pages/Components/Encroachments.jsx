@@ -5,14 +5,21 @@ import CustomButton1 from './CustomButton1';
 
 const { Panel } = Collapse;
 
-const Enchroachments = () => {
+const Enchroachments = ({lostArea, selectedPort}) => {
   const [activeKey, setActiveKey] = useState([]);
 
-  const panels = [
-    { key: '1', title: '20sqkm Encroached', content: 'FHRR+5J Paira, Patuakhali District, Barisal Division, Bangladesh' },
-    { key: '2', title: 'Panel 2', content: 'Content for panel 2' },
-    { key: '3', title: 'Panel 3', content: 'Content for panel 3' },
-  ];
+  const panels = [];
+
+  // Only add panel 1 IF lostArea exists AND is > 0
+  if (lostArea && !isNaN(lostArea)) {
+    panels.push({
+      key: "1",
+      title: `${lostArea} ha Encroached`,
+      content:
+        " ",
+    });
+
+  }
 
   return (
     <Collapse
@@ -60,7 +67,14 @@ const Enchroachments = () => {
               <Button  type="primary">Confirm</Button>
               <CustomButton1 buttonText="Dismiss"/>
               <ConfigProvider wave={{disabled: true}}>
-                 <Button variant="solid"><EnvironmentOutlined/></Button>
+                 <Button variant="solid" 
+                 onClick={() => {
+                        const url = `https://earth.google.com/web/search/${selectedPort.latitude},${selectedPort.longitude}`;
+                        window.open(url, '_blank');  
+                      }}
+                 >
+                  
+                  <EnvironmentOutlined/></Button>
               </ConfigProvider>
                 
                 

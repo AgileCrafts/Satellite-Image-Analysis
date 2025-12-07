@@ -20,7 +20,8 @@ const Header = ({ onMapTypeChange, onLegendChange }) => {
         gap: "16px",
         padding: "16px",
         background:"transparent",
-        zIndex:"5000"
+        zIndex:5000,
+        width:"100%"
       }}
       className="card-grid"
     >
@@ -30,7 +31,7 @@ const Header = ({ onMapTypeChange, onLegendChange }) => {
       </div>
 
       {/* Date Selection goes here */}
-      <div style={{gridColumn: "span 7", display:"flex", justifyContent:"center", marginLeft:"5rem"}}>
+      <div style={{gridColumn: "span 7", display:"flex", justifyContent:"center", width:"100%"}}>
           <CustomizeSection/>
       </div>
 
