@@ -20,7 +20,6 @@ from inference_sdk import InferenceHTTPClient
 import supervision as sv
 import requests
 from PIL import Image
-import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import json

@@ -64,7 +64,7 @@ def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=12
         "collections": ["SENTINEL2_L2A"],
         "bbox": [minx, miny, maxx, maxy],
         "datetime": f"{start}/{end}",
-        "filter": {"op": "<", "args": [{"property": "eo:cloud_cover"}, cfg.get("max_cloud_coverage", 100)]},
+        "filter": {"op": "<", "args": [{"property": "eo:cloud_cover"}, cfg.get("max_cloud_coverage", 20)]},
         "limit": 20
     }
     for attempt in range(3):
@@ -86,7 +86,7 @@ def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=12
             "box": f"{minx},{miny},{maxx},{maxy}",
             "startDate": start[:10],
             "completionDate": end[:10],
-            "cloudCover": f"[0,{cfg.get('max_cloud_coverage', 100)}]",
+            "cloudCover": "[0,20]",
             "productType": "S2MSI2A",
             "maxRecords": 50
         }
@@ -218,7 +218,7 @@ def download_ndwi_period():
     folder = cfg.get("download_folder", "ndwi_geotiffs")
     os.makedirs(folder, exist_ok=True)
 
-    start_date = datetime(2025, 1, 1).date()
+    start_date = datetime(2016, 1, 1).date()
     end_date   = datetime(2025, 11, 30).date()
     current = start_date
 
