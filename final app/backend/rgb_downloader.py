@@ -246,8 +246,8 @@ def download_one_rgb_image():
     #     return
     
 
-    start_date = datetime(2016, 1, 1).date()
-    end_date   = datetime(2025, 1, 1).date()
+    start_date = datetime(2016, 8, 1).date()
+    end_date   = datetime(2025, 11, 30).date()
     # end_date   = start_date
 
     current = start_date

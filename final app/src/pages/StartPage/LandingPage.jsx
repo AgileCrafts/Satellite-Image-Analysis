@@ -19,8 +19,8 @@ export default function LandingPage() {
   });
 
   const [sliderDates, setSliderDates] = useState({
-  pre_date: "2020-01-17",
-  post_date: "2024-01-06"
+  pre_date: "2016-02-17",
+  post_date: "2023-01-11"
 });
 
   // handler to update legend from Header

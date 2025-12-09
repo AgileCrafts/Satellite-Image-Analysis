@@ -128,7 +128,7 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
         >
           <PlaySquareFilled style={{ fontSize: "45px", color: "blue" }} />
         </Button>
-        <TimeSlider onDatesChange={onDatesChange}/>
+        <TimeSlider onDatesChange={onDatesChange} selectedPort={selectedPort}/>
       </div>
 
 
@@ -194,7 +194,15 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
         >
           {/* modal body: remove the previous Expand/Shrink button from body */}
           <div style={{ textAlign: "center" }}>
-            <img src="backend/output.gif" alt="GIF" style={{ width: "100%" }} />
+            {selectedPort?.id ? (
+              <img
+                src={`backend/${selectedPort.id}_output.gif`}
+                alt="GIF"
+                style={{ width: "100%" }}
+              />
+            ) : (
+              <p>No ports selected</p> // Placeholder text or fallback when no port is selected
+            )}
           </div>
 
 

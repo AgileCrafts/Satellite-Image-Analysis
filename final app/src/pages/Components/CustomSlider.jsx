@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { Slider, Button } from "antd";
 import "antd/dist/reset.css";
 
-const TimeSlider = ({onDatesChange}) => {
+const TimeSlider = ({onDatesChange, selectedPort}) => {
 
   const marks = {
 //   0: "2015",
@@ -182,7 +182,11 @@ const TimeSlider = ({onDatesChange}) => {
  };
 
 
- const sliderDates = {
+ const sliderDates = [
+  
+  selectedPort?.id === 1
+        ?
+  {
     0: "2016-02-17",
     1: "2016-11-13",
     2: "2017-01-02",
@@ -192,7 +196,7 @@ const TimeSlider = ({onDatesChange}) => {
     6: "2019-01-02",
     7: "2019-11-13",
     8: "2020-01-17",
-    9: "2020-11-12",
+    9: "2020-11-22",
     10: "2021-01-06",
     11: "2021-05-01",
     12: "2022-01-01",
@@ -203,9 +207,34 @@ const TimeSlider = ({onDatesChange}) => {
     17: "2024-05-25",
     18: "2025-01-30",
     19: "2025-11-11"
-  };
+  } : {
 
-  const [range, setRange] = useState([0, 16]);
+    0: "2016-02-17",
+    1: "2016-12-23",
+    2: "2017-01-02",
+    3: "2017-12-23",
+    4: "2018-03-08",
+    5: "2018-11-18",
+    6: "2019-01-02",
+    7: "2019-11-28",
+    8: "2020-02-11",
+    9: "2020-11-22",
+    10: "2021-01-06",
+    11: "2021-05-01",
+    12: "2022-01-06",
+    13: "2022-11-22",
+    14: "2023-01-11",
+    15: "2023-11-02",
+    16: "2024-01-06",
+    17: "2024-11-26",
+    18: "2025-03-11",
+    19: "2025-10-22"
+
+  }
+]
+  ;
+
+  const [range, setRange] = useState([0, 14]);
 
   // Create a reference for the slider wrapper (this will help us control scroll position)
   const sliderWrapperRef = useRef(null);
@@ -217,11 +246,11 @@ const TimeSlider = ({onDatesChange}) => {
 
 
   const getSelectedDatesFromSlider = (range) => {
-
+    const dates = sliderDates[0];
     
     return {
-      pre_date: sliderDates[range[0]],
-      post_date: sliderDates[range[1]]
+      pre_date: dates[range[0]],
+      post_date: dates[range[1]]
     };
   };
 

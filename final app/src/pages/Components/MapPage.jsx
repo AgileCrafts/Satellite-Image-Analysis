@@ -16,7 +16,11 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
     zIndex: 1,
   });
 
-  const article_1='https://www.thedailystar.net/news/bangladesh/news/blatant-river-grab-3908261';
+  const articles=
+  ['https://www.thedailystar.net/news/bangladesh/news/blatant-river-grab-3908261',
+    'https://www.thedailystar.net/news/bangladesh/crime-justice/news/evict-30-illegal-structures-turags-banks-hc-directs-govt-3812316'
+    
+  ];
 
   const mapRef = useRef();
 
@@ -229,7 +233,12 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
               <div style={{margin:"10px 0px"}}>
                    <Button
                         type="primary"
-                        onClick={() => window.open(article_1, "_blank")}  // Open the link in a new tab
+                        onClick={() => {
+                              const articleUrl = articles[selectedPort.id - 1]; // assuming id starts from 1
+                              if (articleUrl) {
+                                window.open(articleUrl, "_blank");
+                                }
+                      }}  
                       >
                         Read Article
                       </Button>

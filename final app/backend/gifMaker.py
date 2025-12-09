@@ -2,7 +2,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 # Folder where images are stored
-image_folder = 'rgb_images/'
+image_folder = '2_rgb_images/'
 
 # Get all image files in the folder (e.g., .png, .jpg)
 image_files = [f for f in os.listdir(image_folder) if f.endswith(('png', 'jpg', 'jpeg'))]
@@ -34,5 +34,5 @@ for file in image_files:
     images.append(image)
 
 # Save as GIF (using the first image and appending the rest)
-images[0].save('output.gif', save_all=True, append_images=images[1:], duration=400, loop=0)
+images[0].save('2_output.gif', save_all=True, append_images=images[1:], duration=400, loop=0)
 
