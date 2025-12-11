@@ -68,6 +68,7 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
             display: "flex",
             justifyContent: "flex-start", 
             padding: "5px",
+            // backgroundColor: "lightgrey",
           }}
         >
           <Segmented
@@ -105,7 +106,6 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
       </Row>
 
       
-
       {/* Play Button and TimeSlider */}
       <div
         style={{
@@ -124,7 +124,8 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
             width: "45px",
             height: "45px",
             padding: "0",
-            marginRight: "10px", 
+            marginRight: 0, 
+            marginLeft:0
           }}
           onClick={handleModalOpen}
         >
@@ -200,7 +201,11 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
               <img
                 src={`backend/${selectedPort.id}_output.gif`}
                 alt="GIF"
-                style={{ width: isFullscreen ? "1350px" : "100%", height: isFullscreen ? "650px" : "auto"}}
+                style={{ 
+                  width: isFullscreen ? "calc(100vw - 80px)" : "100%", 
+                  height: isFullscreen ? "calc(100vh - 80px)" : "auto",
+                  
+                }}
               />
             ) : (
               <p>No ports selected</p> // Placeholder text or fallback when no port is selected

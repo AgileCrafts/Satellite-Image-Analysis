@@ -3,6 +3,7 @@ import Map, { NavigationControl, Marker, Source, Layer } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { ZoomInOutlined, ZoomOutOutlined, CloseOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import { Card, Typography, ConfigProvider, Button } from "antd";
+import FloatingCard from "./FloatingCard";
 
 import CustomButton1 from "./CustomButton1";
 
@@ -16,11 +17,7 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
     zIndex: 1,
   });
 
-  const articles=
-  ['https://www.thedailystar.net/news/bangladesh/news/blatant-river-grab-3908261',
-    'https://www.thedailystar.net/news/bangladesh/crime-justice/news/evict-30-illegal-structures-turags-banks-hc-directs-govt-3812316'
-    
-  ];
+  
 
   const mapRef = useRef();
 
@@ -123,10 +120,6 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
   }, [legend, mapStyle]);
 
 
-  const [cardVisible, setCardVisible] = React.useState(false);
-  const [cardData, setCardData] = React.useState(null);
-
-  
 
 
   return (
@@ -140,27 +133,27 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
         style={{ width: "100%", height: "100%" }}
 
 
-        onClick={(e) => {
-          const map = mapRef.current?.getMap();
-          if (!map) return;
+        // onClick={(e) => {
+        //   const map = mapRef.current?.getMap();
+        //   if (!map) return;
 
-          // Detect if clicked feature belongs to encroachment layer
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ["mask-layer"],
-          });
+        //   // Detect if clicked feature belongs to encroachment layer
+        //   const features = map.queryRenderedFeatures(e.point, {
+        //     layers: ["mask-layer"],
+        //   });
 
-          if (features.length > 0) {
-            const props = features[0].properties;
+        //   if (features.length > 0) {
+        //     const props = features[0].properties;
 
-            // Open card with properties of encroachment
-            setCardData({
-              lostArea: lostArea || "Unknown",
-              description: props?.description || "Encroachment detected."
-            });
+        //     // Open card with properties of encroachment
+        //     setCardData({
+        //       lostArea: lostArea || "Unknown",
+        //       description: props?.description || "Encroachment detected."
+        //     });
 
-            setCardVisible(true);
-          }
-        }}
+        //     setCardVisible(true);
+        //   }
+        //}}
 
         
       >
@@ -184,74 +177,9 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
         
       </Map>
 
-      {cardVisible && (
-          <Card
-            style={{
-              position: "absolute",
-              top: "100px",
-              left: "10%",
-              transform: "translateX(-10%)",
-              width: "320px",
-              zIndex: 3000,
-            }}
-            title="Encroachment Details"
-            extra={<CloseOutlined onClick={() => setCardVisible(false)} />}
-          >
-            
-            <div style={{padding: "10px"}}>
-              <div className="img-div" style={{ height: "100px", background: "#eee", marginBottom: "10px" }}>
-                <iframe
-                    src={`https://www.google.com/maps?q=${selectedPort.latitude},${selectedPort.longitude}&hl=en&z=14&output=embed`}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-              </div>
-              <div className="des-div" style={{display:"flex", justifyContent:"space-between"}}>
-                <div>
-                    <h3>{selectedPort.port_name}</h3>
-                    <p>{lostArea} ha Encroached</p>
-                </div>
-                
-                <div>
-                  <ConfigProvider wave={{disabled: true}}>
-                 <Button variant="solid" 
-                 onClick={() => {
-                        const url = `https://www.google.com/maps?q=${selectedPort.latitude},${selectedPort.longitude}&hl=es;z=14&output=embed`;
-                        window.open(url, '_blank');  
-                      }}
-                 >
-                  
-                  <EnvironmentOutlined/> Open Map</Button>
-              </ConfigProvider>
-                </div>
-                
-              </div>
-              <div style={{margin:"10px 0px"}}>
-                   <Button
-                        type="primary"
-                        onClick={() => {
-                              const articleUrl = articles[selectedPort.id - 1]; // assuming id starts from 1
-                              if (articleUrl) {
-                                window.open(articleUrl, "_blank");
-                                }
-                      }}  
-                      >
-                        Read Article
-                      </Button>
-
-                </div>
-              <div>
-                      <Button  type="primary" style={{marginRight:"10px"}}>Confirm</Button>
-                      <CustomButton1 buttonText="Dismiss"/>
-              </div>
-            </div>
-              
-          </Card>
-        )}
+      
+      <FloatingCard selectedPort={selectedPort} lostArea={lostArea}/>
+        
 
 
 

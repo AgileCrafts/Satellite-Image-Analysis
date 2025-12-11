@@ -179,9 +179,6 @@ def analyze_water_change_for_port(port_id: int, pre_date: str, post_date: str, d
     # post_date="2025-03-01"
     
 
-    
-    
-    
     # # Download images as bytes (pre/post)
     # pre_bytes = download_images(pre_date, bbox, port_id)
     # post_bytes = download_images(post_date, bbox, port_id)

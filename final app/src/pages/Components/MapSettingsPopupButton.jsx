@@ -19,9 +19,10 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
     >
       {/* BUTTON */}
       <Button
+        size="small"
         style={{
           padding:"20px", 
-          fontSize:"1rem",
+          fontSize:"clamp(0.75rem, 2vw, 0.85rem)",
           zIndex:"1000"
         }}
         onClick={() => setOpen(true)}
@@ -39,7 +40,7 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
             marginTop: ".5rem",      
             right:"2rem", 
             zIndex: 9999,
-            width: "21rem",
+            width: "min(90vw, 360px)",
             height:"12rem",
             padding: "10px",
 
@@ -61,7 +62,7 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
               </Button>
             </div>
 
-            <Divider style={{margin:"0.2rem"}}/>
+            <Divider style={{margin:"2px"}}/>
 
             {/* MAP TYPE SECTION */}
             <h4>Map Type</h4>

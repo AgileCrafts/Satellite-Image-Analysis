@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import MagPage from "../Components/MapPage.jsx";
 import CollapsibleCard from "../Components/CollapsibleCard.jsx";
 import Header from "../Components/Header2.jsx";
-import { Button } from 'antd';
+import { Button ,Row,Col} from 'antd';
 import DropdownCustom from "../Components/DropdownCustom.jsx";
 import Enchroachments from "../Components/Enchroachments.jsx";
 import SliderSection from "../Components/SliderSection.jsx";
@@ -92,20 +92,24 @@ export default function LandingPage() {
       <MagPage mapStyle={mapStyle} legend={legend} selectedPort={selectedPort} waterChangeData={waterChangeData} lostArea={lostArea}/>
 
 
+      
       <div>
         <Header onMapTypeChange={handleMapTypeChange}
                 onLegendChange={handleLegendChange}
         />
       </div>
-
-
+      
+      <div style={{
+        position:"relative",
+        marginTop:"20px"
+      }}>
       <div
         style={{
           position: "absolute",
-          top: "240px",
+          // top: "240px",
           right: "16px",
           marginLeft:"16px",
-          width: "300px",
+          width: "280px",
           maxWidth: "calc(100% - 32px)",
           zIndex: 2000,
           pointerEvents: "none",  
@@ -145,9 +149,8 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
-
-
-      
+  
+      </div>
         
         <div
             style={{
