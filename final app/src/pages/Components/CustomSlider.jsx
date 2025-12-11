@@ -221,14 +221,14 @@ const TimeSlider = ({onDatesChange, selectedPort}) => {
     9: "2020-11-22",
     10: "2021-01-06",
     11: "2021-05-01",
-    12: "2022-01-06",
-    13: "2022-11-22",
+    12: "2022-01-16", //2022-01-16    "2022-01-06"
+    13: "2022-11-12", //2022-11-12    "2022-11-22"
     14: "2023-01-11",
     15: "2023-11-02",
     16: "2024-01-06",
-    17: "2024-11-26",
-    18: "2025-03-11",
-    19: "2025-10-22"
+    17: "2024-11-16", //2022-11-16    "2024-11-26"
+    18: "2025-03-01", //2025-03-01    "2025-03-11"
+    19: "2025-10-27"  //2025-10-27    "2025-10-22"
 
   }
 ]
@@ -299,7 +299,7 @@ const TimeSlider = ({onDatesChange, selectedPort}) => {
   }, {});
 
   return (
-    <div style={{ position: "relative", width: "100%", margin: "50px auto" }}>
+    <div style={{ position: "relative", width: "100%", margin: "50px auto", overflow:"auto" }}>
       {/* Left Button */}
       {/* <Button
         style={{
@@ -332,10 +332,10 @@ const TimeSlider = ({onDatesChange, selectedPort}) => {
       <div
         ref={sliderWrapperRef}
         style={{
-          overflowX: "hidden", // Allows horizontal scrolling
-          whiteSpace: "nowrap", // Prevents line breaks in the marks
-          width: "1450px", // Make the container fit the screen width
-          padding: "20px 0", // Adds padding on top and bottom for better aesthetics
+          // overflowX: "hidden", 
+          whiteSpace: "nowrap", 
+          width: "100%", 
+          padding: "20px 20px", 
         }}
       >
         <Slider

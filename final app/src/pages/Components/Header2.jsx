@@ -117,6 +117,8 @@ const Header = ({ onMapTypeChange, onLegendChange }) => {
             display: "flex",
             justifyContent: "flex-start",
             alignItems: "center",
+            width:"100%",
+            marginBottom:"10px"
           }}
         >
           <LogoSection />
@@ -129,6 +131,7 @@ const Header = ({ onMapTypeChange, onLegendChange }) => {
             display: "flex",
             justifyContent: "center",
             width: "100%",
+            marginBottom:"10px"
           }}
         >
           <CustomizeSection />
@@ -142,6 +145,7 @@ const Header = ({ onMapTypeChange, onLegendChange }) => {
             justifyContent: "flex-end",
             alignItems: "center",
             width: "100%",
+            marginBottom:"10px"
           }}
         >
           <div
@@ -152,8 +156,8 @@ const Header = ({ onMapTypeChange, onLegendChange }) => {
               padding: "12px",
               backgroundColor: "white",
               borderRadius: "12px",
-              width: "100%",
-              maxWidth: "300px", 
+              // width: "100%",
+              flexWrap:"nowrap"
             }}
           >
             <MapSettingsPopupButton

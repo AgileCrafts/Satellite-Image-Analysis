@@ -11,13 +11,18 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
   };
 
   return (
-    <>
+    <div 
+    style={{
+      width:"100%",
+      backgroundColor:"white"
+    }}
+    >
       {/* BUTTON */}
       <Button
         style={{
           padding:"20px", 
           fontSize:"1rem",
-          zIndex:"9999"
+          zIndex:"1000"
         }}
         onClick={() => setOpen(true)}
       >
@@ -31,7 +36,7 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
             // position: "absolute",
             // margin: "0.3rem 0rem 0 0",
             position: "fixed",
-            top: "4.5rem",      
+            marginTop: ".5rem",      
             right:"2rem", 
             zIndex: 9999,
             width: "21rem",
@@ -124,6 +129,6 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
           </Card>
         </div>
       )}
-    </>
+    </div>
   );
 }

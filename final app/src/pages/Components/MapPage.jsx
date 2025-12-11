@@ -130,7 +130,7 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
 
 
   return (
-    <div style={{ height: "100%", width: "100%", position: "absolute" }}>
+    <div style={{ height: "100%", width: "100%", position: "fixed" }}>
       <Map
         ref={mapRef}
         {...viewState}

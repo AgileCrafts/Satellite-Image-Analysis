@@ -14,7 +14,8 @@ export default function CustomizeSection(){
             flexDirection:"row",
             alignItems: "center",
             justifyContent:"center",
-            width: "44rem",
+            width:"100%",
+            maxWidth: "44rem",
             height: "64px",
             gap: "0.5rem",
             borderRadius: "12px",
@@ -22,7 +23,7 @@ export default function CustomizeSection(){
             // padding: "16px",
             // marginLeft:"5rem",
             backgroundColor:"white",
-            zIndex: "9999"
+            // zIndex: "9999"
         }}>
             <div>
                 <CustomSearch/>

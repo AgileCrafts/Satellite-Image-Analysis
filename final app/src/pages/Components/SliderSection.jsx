@@ -59,7 +59,7 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
       <Row
         gutter={[16, 16]} 
         justify="start"  
-        style={{ display: "flex", alignItems: "center", width: "100%" }}
+        style={{ display: "flex", alignItems: "center", width: "100%", background:"transparent", pointerEvents: "auto" }}
       >
         {/* Segmented selection */}
         <Col
@@ -103,6 +103,8 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
           </Col>
         )}
       </Row>
+
+      
 
       {/* Play Button and TimeSlider */}
       <div
@@ -156,7 +158,7 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
                 display: "flex",
                 alignItems: "center",
                 width: "100%",
-                paddingRight: "64px"          // give space for our button + built-in close icon
+                paddingRight: "64px",          // give space for our button + built-in close icon
               }}
             >
               <span style={{ fontWeight: 600 }}>GIF on changes over time</span>
@@ -190,7 +192,7 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
           width={isFullscreen ? "100%" : 800}
           zIndex={9999999}
           bodyStyle={{ padding: 0 }}
-          style={{ top: 0, height: isFullscreen ? "400px" : "auto" }}
+          style={{ top: 0, padding:0 }}
         >
           {/* modal body: remove the previous Expand/Shrink button from body */}
           <div style={{ textAlign: "center" }}>
@@ -198,7 +200,7 @@ const SliderSection = ({onDatesChange, selectedPort}) => {
               <img
                 src={`backend/${selectedPort.id}_output.gif`}
                 alt="GIF"
-                style={{ width: "100%" }}
+                style={{ width: isFullscreen ? "1350px" : "100%", height: isFullscreen ? "650px" : "auto"}}
               />
             ) : (
               <p>No ports selected</p> // Placeholder text or fallback when no port is selected

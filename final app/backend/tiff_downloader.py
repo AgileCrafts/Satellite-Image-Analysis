@@ -218,11 +218,11 @@ def download_ndwi_period():
     folder = cfg.get("download_folder", "ndwi_geotiffs")
     os.makedirs(folder, exist_ok=True)
 
-    start_date = datetime(2022, 1, 1).date()
-    end_date   = datetime(2022, 1, 3).date()
+    start_date = datetime(2016, 1, 1).date()
+    end_date   = datetime(2025, 11, 30).date()
     current = start_date
 
-    print(f"Starting NDWI GeoTIFF download (June–Sep 2025)\n")
+    print(f"Starting NDWI GeoTIFF download\n")
 
     while current <= end_date:
         target_date = current

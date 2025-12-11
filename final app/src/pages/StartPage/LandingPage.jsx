@@ -3,8 +3,8 @@ import MagPage from "../Components/MapPage.jsx";
 import CollapsibleCard from "../Components/CollapsibleCard.jsx";
 import Header from "../Components/Header2.jsx";
 import { Button } from 'antd';
-import DropwdownCustom from "../Components/DropdownCustom.jsx";
-import Enchroachments from "../Components/Encroachments.jsx";
+import DropdownCustom from "../Components/DropdownCustom.jsx";
+import Enchroachments from "../Components/Enchroachments.jsx";
 import SliderSection from "../Components/SliderSection.jsx";
 
 export default function LandingPage() {
@@ -91,44 +91,63 @@ export default function LandingPage() {
 
       <MagPage mapStyle={mapStyle} legend={legend} selectedPort={selectedPort} waterChangeData={waterChangeData} lostArea={lostArea}/>
 
+
       <div>
         <Header onMapTypeChange={handleMapTypeChange}
                 onLegendChange={handleLegendChange}
         />
       </div>
 
-      <div>
-        <CollapsibleCard title="PORTS" style={{
-          position: 'absolute',
-          marginTop: '8%',
-          right: '1%',
-          zIndex: 2000,
-          background: 'white',
-          // padding: '10px',
-          borderRadius: '6px',
-          width: '20%',
-          boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-        }}>
-        <DropwdownCustom onPortClick={handlePortClick}/>
-        </CollapsibleCard>
-    
-     
-        <CollapsibleCard title="ENCROACHMENT LIST" 
-        style={{
-          position: 'absolute',
-          marginTop: '18%',
-          right: '1%',
-          zIndex: 1000,
-          background: 'white',
-          // padding: '5px',
-          borderRadius: '6px',
-          width: '20%',
-          boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-        }}>
 
-        <Enchroachments lostArea={lostArea} selectedPort={selectedPort}/>
-        </CollapsibleCard>
+      <div
+        style={{
+          position: "absolute",
+          top: "240px",
+          right: "16px",
+          marginLeft:"16px",
+          width: "300px",
+          maxWidth: "calc(100% - 32px)",
+          zIndex: 2000,
+          pointerEvents: "none",  
+          margin:"0 auto"
+          // marginTop:"300px"
+        }}
+      >
+        <div style={{ position: "relative", pointerEvents: "auto", width:"100%"}}>
+          {/* PORTS Card – stays in flow, expands freely */}
+          <CollapsibleCard
+            title="PORTS"
+            style={{
+              background: "white",
+              borderRadius: "6px",
+              width: "100%",
+              boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+              position: "relative",
+              zIndex: 3000,  
+            }}
+          >
+            <DropdownCustom onPortClick={handlePortClick} />
+          </CollapsibleCard>
+
+          {/* ENCROACHMENT LIST Card – taken out of flow, fixed offset */}
+          <div style={{ position: "absolute", top: "150px", width: "100%", zIndex: 2500 }}>
+            <CollapsibleCard
+              title="ENCROACHMENT LIST"
+              style={{
+                background: "white",
+                borderRadius: "6px",
+                width: "100%",
+                boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <Enchroachments lostArea={lostArea} selectedPort={selectedPort} />
+            </CollapsibleCard>
+          </div>
         </div>
+      </div>
+
+
+      
         
         <div
             style={{
