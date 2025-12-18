@@ -23,10 +23,15 @@ from PIL import Image
 import numpy as np
 from matplotlib import pyplot as plt
 import json
-from models import Port, Image
+from models import Port, Image as ImageModel
 from schemas import PortSchema
 from modified_downloader import download_images
 from water_change import analyze_water_change
+from sqlalchemy import text
+from fastapi.staticfiles import StaticFiles
+import rasterio
+from rasterio.shutil import copy as rio_copy
+import os
 
 
 
@@ -41,6 +46,8 @@ ALGORITHM = "HS256"
 
 
 app = FastAPI()
+
+# app.mount("/static", StaticFiles(directory="output"), name="static")
 
 #Allow frontend to talk to backend
 app.add_middleware(
@@ -178,31 +185,45 @@ def analyze_water_change_for_port(port_id: int, pre_date: str, post_date: str, d
     # pre_date="2020-03-01"
     # post_date="2025-03-01"
     
+    def get_image_bytes(date: str, port_id: int):
+        # Check if image exists in DB
+        query = text("SELECT ndwi_data FROM images WHERE image_date = :date AND port_id = :port_id LIMIT 1")
+        params = {"date": date, "port_id": port_id}
+        image_exists = db.execute(query, params).fetchone()
+        
+        if image_exists:
+            print(f"Image for {date} already exists in the DB.")
+            return image_exists[0]  # If needed, you could fetch the image from DB here
+        else:
+            print(f"Downloading image for {date}...")
+            return download_images(date, bbox, port_id)
+    
 
     # # Download images as bytes (pre/post)
-    # pre_bytes = download_images(pre_date, bbox, port_id)
-    # post_bytes = download_images(post_date, bbox, port_id)
+    pre_bytes = get_image_bytes(pre_date,  port_id)
+    post_bytes = get_image_bytes(post_date,  port_id)
 
-    # if not pre_bytes or not post_bytes:
-    #     return {"error": "Failed to download pre/post images"}
+    if not pre_bytes or not post_bytes:
+        return {"error": "Failed to download pre/post images"}
 
     # Run water change analysis
     
      # ---- YOUR REAL LOGIC HERE ----
-    pre_path = f"{port_id}_tiff_images/NDWI_5band_{pre_date}.tif"
-    post_path = f"{port_id}_tiff_images/NDWI_5band_{post_date}.tif"
+    # pre_path = f"{port_id}_tiff_images/NDWI_5band_{pre_date}.tif"
+    # post_path = f"{port_id}_tiff_images/NDWI_5band_{post_date}.tif"
     
-    print(pre_path)
-    print(post_path)
+    # print(pre_path)
+    # print(post_path)
     
-    with open(pre_path, "rb") as f:
-        pre_bytes = f.read()
-    with open(post_path, "rb") as f:
-        post_bytes = f.read()
+    # with open(pre_path, "rb") as f:
+    #     pre_bytes = f.read()
+    # with open(post_path, "rb") as f:
+    #     post_bytes = f.read()
 
     
     
     result = analyze_water_change(pre_bytes, post_bytes, output_dir="output" )
+
 
     # return {
     #     "port_name": port.port_name,

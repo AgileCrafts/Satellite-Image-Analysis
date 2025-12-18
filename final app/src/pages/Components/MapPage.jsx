@@ -4,8 +4,11 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { ZoomInOutlined, ZoomOutOutlined, CloseOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import { Card, Typography, ConfigProvider, Button } from "antd";
 import FloatingCard from "./FloatingCard";
-
 import CustomButton1 from "./CustomButton1";
+
+
+import "/src/pages/css/mapPage.css";
+
 
 export default function MapPage({ mapStyle, legend, selectedPort, waterChangeData, lostArea}) {
   const [viewState, setViewState] = React.useState({
@@ -61,18 +64,34 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
   // };
 
     useEffect(() => {
+    if (!waterChangeData || !mapRef.current) return;
+    const map = mapRef.current.getMap();
 
-    console.log(waterChangeData);
+    if (!waterChangeData.features || waterChangeData.features.length === 0) return;
 
-    const map = mapRef.current?.getMap();
-    if (!map || !waterChangeData) return;
+    // Flatten coordinates for bounding box
+    const allCoords = waterChangeData.features.flatMap(feature => {
+      const coords = feature.geometry.coordinates;
+      // Handles Polygon and MultiPolygon
+      if (feature.geometry.type === "Polygon") return coords.flat();
+      if (feature.geometry.type === "MultiPolygon") return coords.flat(2);
+      return [];
+    });
 
-    if (map.getSource("mask-source")) {
-      map.getSource("mask-source").setData(waterChangeData);
+    if (allCoords.length === 0) return;
 
-    }
+    const lons = allCoords.map(c => c[0]);
+    const lats = allCoords.map(c => c[1]);
 
+    const minLon = Math.min(...lons);
+    const maxLon = Math.max(...lons);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+
+    // Fit map to bounds with some padding
+    map.fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding: 50, duration: 1000 });
   }, [waterChangeData]);
+
   
 
   const maskGeoJSON = waterChangeData || null;
@@ -159,7 +178,7 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
       >
 
         {/* Red Mask Overlay */}
-        {waterChangeData && (
+       {waterChangeData && (
           <Source id="mask-source" type="geojson" data={waterChangeData}>
             <Layer
               id="mask-layer"

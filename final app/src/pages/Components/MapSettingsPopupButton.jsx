@@ -124,6 +124,7 @@ export default function MapSettingsPopupButton({ onMapTypeChange, onLegendChange
             <Checkbox
               name="landmarks"
               onChange={handleLegendChange}
+              defaultChecked
             >
               Show Landmarks
             </Checkbox>

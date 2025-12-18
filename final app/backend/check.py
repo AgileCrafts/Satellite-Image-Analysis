@@ -95,10 +95,20 @@
 # image = Image.open("lost_water_mask.tif")
 # image.show()
 
+# import rasterio
+
+# # Open the GeoTIFF file
+# with rasterio.open('lost_water_mask.tif') as dataset:
+#     # Get the CRS (Coordinate Reference System)
+#     crs = dataset.crs
+#     print(f"CRS: {crs}")
+
+import os
+import pyproj
 import rasterio
 
-# Open the GeoTIFF file
-with rasterio.open('lost_water_mask.tif') as dataset:
-    # Get the CRS (Coordinate Reference System)
-    crs = dataset.crs
-    print(f"CRS: {crs}")
+# Force correct PROJ path (pyproj bundled PROJ)
+os.environ["PROJ_LIB"] = pyproj.datadir.get_data_dir()
+
+# Force correct GDAL path (Rasterio internal)
+# os.environ["GDAL_DATA"] = rasterio._gdal_data

@@ -6,6 +6,7 @@ import { Button ,Row,Col} from 'antd';
 import DropdownCustom from "../Components/DropdownCustom.jsx";
 import Enchroachments from "../Components/Enchroachments.jsx";
 import SliderSection from "../Components/SliderSection.jsx";
+import "../css/landingPage.css";
 
 export default function LandingPage() {
   const [mapStyle, setMapStyle] = useState("mapbox://styles/mapbox/streets-v11");
@@ -82,12 +83,7 @@ export default function LandingPage() {
 
   return (
 
-    <div
-    style={{
-        height:"100vh",
-        width:"100vw",
-        position: "relative"
-    }}>
+    <div  className="landing-container">
 
       <MagPage mapStyle={mapStyle} legend={legend} selectedPort={selectedPort} waterChangeData={waterChangeData} lostArea={lostArea}/>
 
@@ -99,50 +95,23 @@ export default function LandingPage() {
         />
       </div>
       
-      <div style={{
-        position:"relative",
-        marginTop:"20px"
-      }}>
-      <div
-        style={{
-          position: "absolute",
-          // top: "240px",
-          right: "16px",
-          marginLeft:"16px",
-          width: "280px",
-          maxWidth: "calc(100% - 32px)",
-          zIndex: 2000,
-          pointerEvents: "none",  
-          margin:"0 auto"
-          // marginTop:"300px"
-        }}
-      >
-        <div style={{ position: "relative", pointerEvents: "auto", width:"100%"}}>
-          {/* PORTS Card – stays in flow, expands freely */}
+      <div className="landing-sub-container">
+      <div className="collapseCard-container" style={{zIndex:2000}}>
+        <div className="landing-card-wrapper">
+          {/* PORTS Card*/}
           <CollapsibleCard
             title="PORTS"
-            style={{
-              background: "white",
-              borderRadius: "6px",
-              width: "100%",
-              boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-              position: "relative",
-              zIndex: 3000,  
-            }}
+            className="ports-card"
+            style={{zIndex:3000}}
           >
             <DropdownCustom onPortClick={handlePortClick} />
           </CollapsibleCard>
 
-          {/* ENCROACHMENT LIST Card – taken out of flow, fixed offset */}
-          <div style={{ position: "absolute", top: "150px", width: "100%", zIndex: 2500 }}>
+          {/* ENCROACHMENT LIST Card */}
+          <div className="encroachment-container" style={{zIndex:2500}}>
             <CollapsibleCard
               title="ENCROACHMENT LIST"
-              style={{
-                background: "white",
-                borderRadius: "6px",
-                width: "100%",
-                boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-              }}
+              className="encroachment-card"
             >
               <Enchroachments lostArea={lostArea} selectedPort={selectedPort} />
             </CollapsibleCard>
@@ -152,12 +121,9 @@ export default function LandingPage() {
   
       </div>
         
-        <div
+        <div className="landing-slider"
             style={{
-              position: "absolute",
-              bottom: "2%",
-              zIndex: 1,
-              width: "98%",   
+              zIndex: 1  
             }}
           >
             <SliderSection onDatesChange={handleSliderDates} selectedPort={selectedPort}/>

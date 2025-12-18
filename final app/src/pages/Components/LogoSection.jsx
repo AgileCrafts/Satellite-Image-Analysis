@@ -16,13 +16,13 @@ const LogoSection = () => {
         borderWidth: "1px",
         padding: "16px",
         backgroundColor:"white",
-        flexShrink:1
+        flexShrink:1,
+        marginLeft:"5px"
       }}
     >
       <img src="images\logo.png" style={{height:"48px", width:"48px", flexShrink:0}}></img>
       <h6 
       style={{
-        fontSize:"0.9rem", 
         margin:0,
         flex:1,
         fontSize: "clamp(0.65rem, 1.2vw, 0.9rem)"

@@ -12,6 +12,14 @@ from geoalchemy2.shape import to_shape
 import math
 from PIL import Image as PILImage
 import os
+import rasterio
+from rasterio.io import MemoryFile
+from rasterio.warp import calculate_default_transform, reproject, Resampling
+from rasterio.transform import from_bounds
+
+
+from pyproj import Geod
+import math
 
 # ---------------- CONFIG ----------------
 def load_config(path="config2.json"):
@@ -42,8 +50,100 @@ def parse_iso8601_utc(date_str):
         date_str = date_str[:-1]
     return datetime.fromisoformat(date_str)
 
+
+def bbox_to_pixels(bbox, resolution=10):
+    geod = Geod(ellps="WGS84")
+    minx, miny, maxx, maxy = bbox
+
+    _, _, width_m = geod.inv(
+        minx, (miny + maxy) / 2,
+        maxx, (miny + maxy) / 2
+    )
+    _, _, height_m = geod.inv(
+        (minx + maxx) / 2, miny,
+        (minx + maxx) / 2, maxy
+    )
+
+    return (
+        math.ceil(width_m / resolution),
+        math.ceil(height_m / resolution)
+    )
+
+
+
+def fix_transform(tiff_bytes, bbox, width, height):
+    """
+    Correctly set transform for Mapbox: top-left origin, negative Y pixel size.
+    """
+    minx, miny, maxx, maxy = bbox
+    
+    # Calculate pixel sizes
+    pixel_x = (maxx - minx) / width
+    pixel_y = (miny - maxy) / height  # negative because top to bottom
+    
+    # Top-left corner as origin
+    transform = rasterio.Affine(
+        pixel_x, 0.0, minx,
+        0.0, pixel_y, maxy
+    )
+    
+    with MemoryFile(tiff_bytes) as memfile:
+        with memfile.open() as src:
+            profile = src.profile.copy()
+            profile.update({
+                "crs": "EPSG:4326",
+                "transform": transform,
+                "width": width,
+                "height": height
+            })
+            data = src.read()
+            with MemoryFile() as out_mem:
+                with out_mem.open(**profile) as dst:
+                    dst.write(data)
+                return out_mem.getvalue()
+
+
+# ---------------- TIFF REPROJECT FIX ----------------
+def reproject_tiff_to_4326(tiff_bytes: bytes) -> bytes:
+    """
+    Ensures TIFF is EPSG:4326.
+    Returns new TIFF bytes.
+    """
+    with MemoryFile(tiff_bytes) as memfile:
+        with memfile.open() as src:
+
+            if src.crs and src.crs.to_string() == "EPSG:4326":
+                return tiff_bytes  # already correct
+
+            dst_crs = "EPSG:4326"
+            transform, width, height = calculate_default_transform(
+                src.crs, dst_crs, src.width, src.height, *src.bounds
+            )
+
+            profile = src.profile.copy()
+            profile.update({
+                "crs": dst_crs,
+                "transform": transform,
+                "width": width,
+                "height": height
+            })
+
+            with MemoryFile() as out_mem:
+                with out_mem.open(**profile) as dst:
+                    for i in range(1, src.count + 1):
+                        reproject(
+                            source=rasterio.band(src, i),
+                            destination=rasterio.band(dst, i),
+                            src_transform=src.transform,
+                            src_crs=src.crs,
+                            dst_transform=transform,
+                            dst_crs=dst_crs,
+                            resampling=Resampling.nearest
+                        )
+                return out_mem.getvalue()
+
 # ---------------- SCENE SEARCH (STAC) ----------------
-def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=120):
+def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=30):
     """
     Search for the closest Sentinel-2 L2A scene using CDSE STAC API with fallback to OpenSearch.
     Returns the scene dictionary or None if not found.
@@ -177,6 +277,7 @@ def process_request(evalscript, bbox, time_interval, width, height, token):
         print(f"Process API failed: {e}")
         raise
 
+
 # ---------------- DOWNLOAD SCENE ----------------
 def download_scene(scene_info, cfg, bbox, token, index, port_id: int, db: Session):
     scene_id = scene_info["id"]
@@ -201,20 +302,20 @@ def download_scene(scene_info, cfg, bbox, token, index, port_id: int, db: Sessio
     # height=512
     
     print(bbox)
-    print("\n\n\n\n\n\n\n\n")
+    # print("\n\n\n\n\n\n\n\n")
+    width, height = bbox_to_pixels(bbox, resolution=10)
+    # scale_factor = 100000  # try increasing/decreasing this
     
-    scale_factor = 100000  # try increasing/decreasing this
+    # xwidth=(bbox[2] - bbox[0])
+    # yheight=(bbox[3] - bbox[1])
     
-    xwidth=(bbox[2] - bbox[0])
-    yheight=(bbox[3] - bbox[1])
-    
-    rratio=xwidth/yheight
+    # rratio=xwidth/yheight
 
-    width = int(xwidth * scale_factor)
-    height = int(yheight * scale_factor)
+    # width = int(xwidth * scale_factor)
+    # height = int(yheight * scale_factor)
     
-    width = min(1300, width)
-    height = min(int(1300/rratio), height)
+    # width = min(1300, width)
+    # height = min(int(1300/rratio), height)
     
     print(width)
     print(height)
@@ -255,8 +356,29 @@ def download_scene(scene_info, cfg, bbox, token, index, port_id: int, db: Sessio
     """
 
     try:
+        # Download
         ndwi_tiff = process_request(ndwi_evalscript, bbox, time_interval, width, height, token)
         rgb_tiff = process_request(rgb_evalscript, bbox, time_interval, width, height, token)
+
+        # 🔥 FIX: REPROJECT IMMEDIATELY
+        # ndwi_tiff = reproject_tiff_to_4326(ndwi_raw)
+        # rgb_tiff = reproject_tiff_to_4326(rgb_raw)
+        
+        # ndwi_tiff = fix_transform(ndwi_tiff, bbox, width, height)
+        # rgb_tiff = fix_transform(rgb_tiff, bbox, width, height)
+        
+        with MemoryFile(ndwi_tiff) as memfile:
+            with memfile.open() as src:
+                print("CRS:", src.crs)
+                print("Transform (full precision):")
+                print(repr(src.transform))  # This shows the exact Affine object with all decimals
+                print("Individual values:")
+                print(f"Pixel size X: {src.transform.a}")
+                print(f"Pixel size Y: {src.transform.e}")
+                print(f"Upper-left X: {src.transform.c}")
+                print(f"Upper-left Y: {src.transform.f}")
+                print("Bounds:", src.bounds)
+                print("Width, Height:", src.width, src.height)
 
         new_image = Image(
             port_id=port_id,
@@ -267,7 +389,7 @@ def download_scene(scene_info, cfg, bbox, token, index, port_id: int, db: Sessio
                 "scene_id": scene_id,
                 "capture_date": date_str,
                 "cloud_cover": cloud_cover,
-                "bands": ["B03","B04","B08","B11","B12"],
+                "bands": ["B03","B04","B08","B11","SCL"],
                 "resolution": cfg["resolution"]
             }
         )

@@ -9,24 +9,36 @@ from shapely.ops import unary_union, transform
 import pyproj
 import json
 from PIL import Image
+import matplotlib.pyplot as plt
+
+import os
+os.environ["PROJ_LIB"] = pyproj.datadir.get_data_dir()
+
 import rasterio
 from rasterio.transform import from_bounds
-# from rasterio.wrap import transform_geom
+from rasterio.warp import transform_geom
+from rasterio import features
+from shapely.ops import unary_union
 
 # ---------------- LOAD 5-BAND GEOTIFF ----------------
 def load_s2_tiff_riox(tiff_bytes):
     xds = rioxarray.open_rasterio(io.BytesIO(tiff_bytes))
 
-    if len(xds.band) != 5:
-        raise ValueError(f"Expected 5 bands, got {len(xds.band)}")
-
+    # ---------------- FIX: Reproject to EPSG:4326 ----------------
+    if xds.rio.crs.to_string() != "EPSG:4326":
+        xds = xds.rio.reproject("EPSG:4326")
 
     green = xds.isel(band=0).values.astype(np.float32)   # B03: Green
     swir1 = xds.isel(band=3).values.astype(np.float32)   # B11: SWIR1
 
-    transform = xds.rio.transform()
-    crs = xds.rio.crs
+    transform = xds.rio.transform()  # now in lon/lat
+    crs = xds.rio.crs                 # EPSG:4326
     bounds = xds.rio.bounds()
+    
+    
+    for i in range(len(xds.band)):
+        band = xds.isel(band=i).values
+        print(f"Band {i} min/max: {band.min()}/{band.max()}")
 
     xds.close()
     return green, swir1, transform, crs, bounds
@@ -51,7 +63,7 @@ def analyze_water_change(pre_bytes, post_bytes, output_dir="./"):
 
     pre_mndwi = calculate_mndwi(pre_green, pre_swir1)
     post_mndwi = calculate_mndwi(post_green, post_swir1)
-
+    
     pre_thresh = threshold_otsu(pre_mndwi)
     post_thresh = threshold_otsu(post_mndwi)
 
@@ -98,12 +110,16 @@ def analyze_water_change(pre_bytes, post_bytes, output_dir="./"):
     change_map_bytes = io.BytesIO()
     Image.fromarray(change_rgb).save(change_map_bytes, format="PNG")
     change_map_bytes = change_map_bytes.getvalue()
+    
 
     # Lost water mask (binary)
     lost_water_mask = pre_mask & (~post_mask)
 
     # Save as GeoTIFF (perfect georeferencing!)
     lost_tif_path = f"{output_dir}/lost_water_mask.tif"
+    
+    
+    
     profile = {
         'driver': 'GTiff',
         'height': min_rows,
@@ -119,36 +135,102 @@ def analyze_water_change(pre_bytes, post_bytes, output_dir="./"):
     print(f"GeoTIFF saved: {lost_tif_path}")
 
     # Extract polygons → GeoJSON (lon/lat)
+    # polygons = []
+    # for geom, val in rasterio.features.shapes(lost_water_mask.astype(np.uint8), transform=pre_transform):
+    #     if val == 1:
+    #         poly = shape(geom)
+    #         if poly.is_valid and poly.area > 0:
+    #             polygons.append(poly)
+
+    # if polygons:
+    #     merged = unary_union(polygons).simplify(0.00003, preserve_topology=True)
+    #     if pre_crs and str(pre_crs) != "EPSG:4326":
+    #         transformer = pyproj.Transformer.from_crs(pre_crs, "EPSG:4326", always_xy=True)
+    #         merged = transform(transformer.transform, merged)
+    #     geojson = {
+    #         "type": "FeatureCollection",
+    #         "features": [{
+    #             "type": "Feature",
+    #             "geometry": mapping(merged),
+    #             "properties": {
+    #                 "change": "lost_water",
+    #                 "area_m2": merged.area,
+    #                 "area_ha": round(merged.area / 10000, 2)
+    #             }
+    #         }]
+    #     }
+    
+    # polygons = []
+    # for geom, val in features.shapes(lost_water_mask.astype(np.uint8), transform=pre_transform):
+    #     if val == 1:
+    #         polygons.append(geom)
+
+    # if polygons:
+    #     # Convert to Shapely and merge
+    #     shapely_polys = [shape(p) for p in polygons]
+    #     merged = unary_union(shapely_polys)
+    #     merged = merged.simplify(0.00001, preserve_topology=True)
+
+    #     # Transform to WGS84 for Mapbox
+    #     merged_geojson = transform_geom(str(pre_crs), "EPSG:4326", mapping(merged), precision=6)
+
+    #     geojson = {
+    #         "type": "FeatureCollection",
+    #         "features": [{
+    #             "type": "Feature",
+    #             "geometry": merged_geojson,
+    #             "properties": {"change": "lost_water"}
+    #         }]
+    #     }
+    # else:
+    #     geojson = {"type": "FeatureCollection", "features": []}
+
+    # # Save to file
+    # geojson_path = f"{output_dir}/lost_water.geojson"
+    # with open(geojson_path, "w") as f:
+    #     json.dump(geojson, f, indent=2)
+    # print(f"GeoJSON saved: {geojson_path}")
     polygons = []
-    for geom, val in rasterio.features.shapes(lost_water_mask.astype(np.uint8), transform=pre_transform):
+
+    # pre_transform MUST be the transform from the reprojected TIFF (EPSG:4326)
+    for geom, val in features.shapes(
+            lost_water_mask.astype(np.uint8),
+            transform=pre_transform
+    ):
         if val == 1:
-            poly = shape(geom)
-            if poly.is_valid and poly.area > 0:
-                polygons.append(poly)
+            polygons.append(geom)   
 
     if polygons:
-        merged = unary_union(polygons).simplify(0.00003, preserve_topology=True)
-        if pre_crs and str(pre_crs) != "EPSG:4326":
-            transformer = pyproj.Transformer.from_crs(pre_crs, "EPSG:4326", always_xy=True)
-            merged = transform(transformer.transform, merged)
+        # Convert to Shapely + merge
+        shapely_polys = [shape(p) for p in polygons]
+        merged = unary_union(shapely_polys)
+
+        # Optional: very small simplify (degrees!)
+        merged = merged.simplify(0.0001, preserve_topology=True)
+
+        # 🚫 NO transform_geom anymore
+        merged_geojson = mapping(merged)
+
+
         geojson = {
             "type": "FeatureCollection",
             "features": [{
                 "type": "Feature",
-                "geometry": mapping(merged),
-                "properties": {
-                    "change": "lost_water",
-                    "area_m2": merged.area,
-                    "area_ha": round(merged.area / 10000, 2)
-                }
+                "geometry": merged_geojson,
+                "properties": {"change": "lost_water"}
             }]
         }
     else:
-        geojson = {"type": "FeatureCollection", "features": []}
+        geojson = {
+            "type": "FeatureCollection",
+            "features": []
+        }
 
+    # Save to file
     geojson_path = f"{output_dir}/lost_water.geojson"
     with open(geojson_path, "w") as f:
         json.dump(geojson, f, indent=2)
+
     print(f"GeoJSON saved: {geojson_path}")
     
     

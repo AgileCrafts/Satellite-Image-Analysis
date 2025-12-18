@@ -151,7 +151,7 @@ def download_ndwi_tiff(scene, bbox, token, target_date, folder):
         //VERSION=3
         function setup() {
             return {
-                input: ["B03","B04","B08","B11","SCL"],
+                input: ["B02","B03","B04","B08","B11"],
                 output: {bands: 5, sampleType: "FLOAT32"}
             };
         }
@@ -218,8 +218,8 @@ def download_ndwi_period():
     folder = cfg.get("download_folder", "ndwi_geotiffs")
     os.makedirs(folder, exist_ok=True)
 
-    start_date = datetime(2016, 1, 1).date()
-    end_date   = datetime(2025, 11, 30).date()
+    start_date = datetime(2023,1,11).date()
+    end_date   = datetime(2023,1,11).date()
     current = start_date
 
     print(f"Starting NDWI GeoTIFF download\n")

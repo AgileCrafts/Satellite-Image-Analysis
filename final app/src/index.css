@@ -316,77 +316,7 @@ body{
 }
 
 /**************** Components *****************/
-/* MapPage */
-.mapNav{
-  width: 40px;
-  height: 40px;
-  border: none;
-  cursor: pointer;
-  background: white;
-  border-bottom: "2px solid #eee";
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  justify-content: center;
-  font-size: 18px;
-  margin-bottom: 1px;
-}
 
-/*Map Popup Button*/
-.radio-img {
-  display: flex;
-  gap: 15px; /* Space between options */
-}
-
-.radio-input {
-  display: none; /* Hide the native radio button */
-}
-
-.radio-label {
-  cursor: pointer;
-  display: inline-block;
-  position: relative; /* Positioning context for overlay */
-  width: 150px;
-  height: 80px; /* Set a fixed height for the label */
-}
-
-.image-container {
-  position: relative; /* Makes the text position relative to the image */
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-}
-
-.radio-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Ensure the image covers the whole container */
-  border-radius: 8px;
-  
-}
-
-.image-text {
-  position: absolute;
-  bottom: 10px; /* Position the text at the bottom */
-  left: 50%;
-  transform: translateX(-50%); /* Center the text horizontally */
-  color: black;
-  font-size: 1rem;
-  font-weight: bold;
-  backdrop-filter: blur(5px);
-  /* text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); Optional: adds a shadow for better visibility */
-}
-
-.radio-input:checked + .radio-label .image-container {
-  border: 2px solid #4d9af3; /* Highlight with border when selected */
-  box-shadow: 0 0 8px rgba(22, 119, 255, 0.5); /* Optional: glowing effect when selected */
-}
-
-/* Optional: hover effect */
-.radio-label:hover .image-container {
-  border: 2px solid #d9e5f6; /* Subtle border change on hover */
-  box-shadow: 0 0 5px rgba(22, 119, 255, 0.2); /* Optional hover shadow */
-}
 
 /*********** Port Dropdown ********************/
 .portBtn{
