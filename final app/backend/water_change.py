@@ -6,7 +6,7 @@ from skimage.filters import threshold_otsu
 from skimage.morphology import remove_small_objects, remove_small_holes
 from shapely.geometry import shape, mapping, Polygon, MultiPolygon
 from shapely.ops import unary_union, transform
-from shapely.affinity import translate
+from shapely.affinity import translate, scale
 import pyproj
 import json
 from PIL import Image
@@ -14,6 +14,31 @@ import matplotlib.pyplot as plt
 
 import os
 os.environ["PROJ_LIB"] = pyproj.datadir.get_data_dir()
+
+
+# ---------------- SCALING FUNCTIONS ----------------
+def apply_scale_to_geometry(geometry, lat_scale=1.0, lon_scale=1.0):
+    """
+    Scale a geometry from its center point.
+    
+    Args:
+        geometry: Shapely geometry object
+        lat_scale: Scale factor for latitude (Y axis). >1 = expand, <1 = shrink
+        lon_scale: Scale factor for longitude (X axis). >1 = expand, <1 = shrink
+    
+    Returns:
+        Scaled geometry
+    
+    Examples:
+        lat_scale=1.1 → 10% larger in north-south direction
+        lon_scale=0.95 → 5% smaller in east-west direction
+    """
+    if geometry is None or geometry.is_empty:
+        return geometry
+    
+    # Scale from the centroid of the geometry
+    centroid = geometry.centroid
+    return scale(geometry, xfact=lon_scale, yfact=lat_scale, origin=centroid)
 
 
 # ---------------- OFFSET/SHIFT FUNCTIONS ----------------
@@ -169,7 +194,8 @@ def create_water_mask(mndwi_image, threshold):
 # ---------------- FULL CHANGE MAP + GEOJSON + GEOTIFF ----------------
 def analyze_water_change(pre_bytes, post_bytes, output_dir="./", 
                           lat_offset_percent=0, lon_offset_percent=0,
-                          lat_offset=0.0, lon_offset=0.0):
+                          lat_offset=0.0, lon_offset=0.0,
+                          lat_scale=1.0, lon_scale=1.0):
     
     # Load both images
     pre_green, pre_swir1, pre_transform, pre_crs, pre_bounds = load_s2_tiff_riox(pre_bytes)
@@ -322,11 +348,19 @@ def analyze_water_change(pre_bytes, post_bytes, output_dir="./",
         # Optional: very small simplify (degrees!)
         merged = merged.simplify(0.0001, preserve_topology=True)
 
-        # Initialize offset tracking variables
+        # Initialize tracking variables
         applied_lat_offset = 0.0
         applied_lon_offset = 0.0
+        applied_lat_scale = lat_scale
+        applied_lon_scale = lon_scale
 
-        # Apply offset to align with OpenStreetMap/Mapbox
+        # STEP 1: Apply SCALING first (to fix size/ratio issues)
+        # If one side aligns but other doesn't, adjust scale
+        if lat_scale != 1.0 or lon_scale != 1.0:
+            merged = apply_scale_to_geometry(merged, lat_scale=lat_scale, lon_scale=lon_scale)
+            print(f"Applied scaling: lat_scale={lat_scale}, lon_scale={lon_scale}")
+
+        # STEP 2: Apply OFFSET (to shift position)
         # Use percentage-based offset if provided, otherwise use direct offset
         if lat_offset_percent != 0 or lon_offset_percent != 0:
             calc_lon_offset, calc_lat_offset = calculate_offset_from_percentage(
@@ -355,11 +389,13 @@ def analyze_water_change(pre_bytes, post_bytes, output_dir="./",
                 "geometry": merged_geojson,
                 "properties": {
                     "change": "lost_water",
-                    "offset_applied": {
+                    "transform_applied": {
                         "lat_offset_percent": lat_offset_percent,
                         "lon_offset_percent": lon_offset_percent,
                         "lat_offset_deg": applied_lat_offset,
-                        "lon_offset_deg": applied_lon_offset
+                        "lon_offset_deg": applied_lon_offset,
+                        "lat_scale": applied_lat_scale,
+                        "lon_scale": applied_lon_scale
                     }
                 }
             }]

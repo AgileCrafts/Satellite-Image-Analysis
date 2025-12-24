@@ -241,14 +241,25 @@ def analyze_water_change_for_port(
     
     
     # ============================================
-    # OFFSET CONFIGURATION - CHANGE THESE VALUES
+    # TRANSFORM CONFIGURATION - CHANGE THESE VALUES
     # ============================================
-    # Adjust these values to align plots with OpenStreetMap/Mapbox
+    # 
+    # STEP 1: SCALE (fix size/ratio issues)
+    # If one side aligns but other doesn't, adjust scale:
+    # - lat_scale > 1.0 = stretch vertically (north-south)
+    # - lat_scale < 1.0 = shrink vertically
+    # - lon_scale > 1.0 = stretch horizontally (east-west)
+    # - lon_scale < 1.0 = shrink horizontally
+    # 
+    HARDCODED_LAT_SCALE = 1           # Try: 0.95, 1.0, 1.05, 1.1
+    HARDCODED_LON_SCALE = 1           # Try: 0.95, 1.0, 1.05, 1.1
+    #
+    # STEP 2: OFFSET (shift position after scaling)
     # Positive lat = move North (up), Negative lat = move South (down)
     # Positive lon = move East (right), Negative lon = move West (left)
-    
-    HARDCODED_LAT_OFFSET_PERCENT = -6   # Change this: try 5, 10, 15, 20, -10, etc.
-    HARDCODED_LON_OFFSET_PERCENT = 6    # Change this: try 5, 10, 15, 20, -10, etc.
+    #
+    HARDCODED_LAT_OFFSET_PERCENT = 0   # Try: 5, 10, 15, 20, -5, -10, etc.
+    HARDCODED_LON_OFFSET_PERCENT = 0    # Try: 5, 10, 15, 20, -5, -10, etc.
     # ============================================
     
     result = analyze_water_change(
@@ -258,7 +269,9 @@ def analyze_water_change_for_port(
         lat_offset_percent=HARDCODED_LAT_OFFSET_PERCENT,
         lon_offset_percent=HARDCODED_LON_OFFSET_PERCENT,
         lat_offset=lat_offset,
-        lon_offset=lon_offset
+        lon_offset=lon_offset,
+        lat_scale=HARDCODED_LAT_SCALE,
+        lon_scale=HARDCODED_LON_SCALE
     )
 
 
