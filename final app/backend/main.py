@@ -168,10 +168,28 @@ def get_ports_by_region(region: str, db: Session = Depends(get_db)):
 
 # ---------------- ANALYZE WATER CHANGE ----------------
 @app.get("/analyze-water-change/{port_id}")
-def analyze_water_change_for_port(port_id: int, pre_date: str, post_date: str, db: Session = Depends(get_db)):
+def analyze_water_change_for_port(
+    port_id: int, 
+    pre_date: str, 
+    post_date: str, 
+    lat_offset_percent: float = 0,
+    lon_offset_percent: float = 0,
+    lat_offset: float = 0.0,
+    lon_offset: float = 0.0,
+    db: Session = Depends(get_db)
+):
     """
     Given a port ID, gets its bbox from DB, downloads pre/post images for the specified dates,
     then runs water change analysis and returns results.
+    
+    Offset Parameters (to align with OpenStreetMap/Mapbox):
+    - lat_offset_percent: Percentage offset in latitude direction (-100 to 100)
+    - lon_offset_percent: Percentage offset in longitude direction (-100 to 100)
+    - lat_offset: Direct offset in latitude (degrees) - positive moves north
+    - lon_offset: Direct offset in longitude (degrees) - positive moves east
+    
+    Example: lat_offset_percent=10, lon_offset_percent=-5 will shift the plot 
+    10% north and 5% west relative to the detected area's bounding box.
     """
     port = db.query(Port).filter(Port.id == port_id).first()
     if not port:
@@ -222,7 +240,26 @@ def analyze_water_change_for_port(port_id: int, pre_date: str, post_date: str, d
 
     
     
-    result = analyze_water_change(pre_bytes, post_bytes, output_dir="output" )
+    # ============================================
+    # OFFSET CONFIGURATION - CHANGE THESE VALUES
+    # ============================================
+    # Adjust these values to align plots with OpenStreetMap/Mapbox
+    # Positive lat = move North (up), Negative lat = move South (down)
+    # Positive lon = move East (right), Negative lon = move West (left)
+    
+    HARDCODED_LAT_OFFSET_PERCENT = -6   # Change this: try 5, 10, 15, 20, -10, etc.
+    HARDCODED_LON_OFFSET_PERCENT = 6    # Change this: try 5, 10, 15, 20, -10, etc.
+    # ============================================
+    
+    result = analyze_water_change(
+        pre_bytes, 
+        post_bytes, 
+        output_dir="output",
+        lat_offset_percent=HARDCODED_LAT_OFFSET_PERCENT,
+        lon_offset_percent=HARDCODED_LON_OFFSET_PERCENT,
+        lat_offset=lat_offset,
+        lon_offset=lon_offset
+    )
 
 
     # return {
@@ -236,3 +273,52 @@ def analyze_water_change_for_port(port_id: int, pre_date: str, post_date: str, d
         "lost_water_geojson": result["geojson"],
         "lost_area_ha": result["lost_area_ha"]
     }
+
+
+# ---------------- APPLY OFFSET TO GEOJSON ----------------
+from water_change import apply_offset_to_geojson
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
+
+class OffsetGeoJSONRequest(BaseModel):
+    geojson: Dict[str, Any]
+    lat_offset_percent: Optional[float] = 0
+    lon_offset_percent: Optional[float] = 0
+    lat_offset: Optional[float] = 0.0
+    lon_offset: Optional[float] = 0.0
+
+@app.post("/apply-offset-to-geojson")
+def apply_offset_endpoint(request: OffsetGeoJSONRequest):
+    """
+    Apply offset to an existing GeoJSON to align with OpenStreetMap/Mapbox.
+    
+    This is useful when you want to adjust already-generated water change 
+    detection results without re-running the full analysis.
+    
+    Parameters:
+    - geojson: The GeoJSON FeatureCollection to offset
+    - lat_offset_percent: Percentage offset in latitude direction (-100 to 100)
+    - lon_offset_percent: Percentage offset in longitude direction (-100 to 100)  
+    - lat_offset: Direct offset in latitude (degrees) - positive moves north
+    - lon_offset: Direct offset in longitude (degrees) - positive moves east
+    
+    Returns:
+    - The offset GeoJSON with updated coordinates
+    """
+    try:
+        # Use percentage if provided, otherwise use direct offset
+        if request.lat_offset_percent != 0 or request.lon_offset_percent != 0:
+            result = apply_offset_to_geojson(
+                request.geojson,
+                lat_offset_percent=request.lat_offset_percent,
+                lon_offset_percent=request.lon_offset_percent
+            )
+        else:
+            result = apply_offset_to_geojson(
+                request.geojson,
+                lat_offset=request.lat_offset,
+                lon_offset=request.lon_offset
+            )
+        return {"offset_geojson": result}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error applying offset: {str(e)}")
