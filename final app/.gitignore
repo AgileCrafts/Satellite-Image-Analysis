@@ -26,3 +26,7 @@ dist-ssr
 
 backend/venv
 backend/check
+backend/images
+*.gif
+backend/output
+backend/output1
