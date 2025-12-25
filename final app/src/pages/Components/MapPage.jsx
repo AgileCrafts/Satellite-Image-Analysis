@@ -10,7 +10,7 @@ import CustomButton1 from "./CustomButton1";
 import "/src/pages/css/mapPage.css";
 
 
-export default function MapPage({ mapStyle, legend, selectedPort, waterChangeData, lostArea}) {
+export default function MapPage({ mapStyle, legend, selectedPort, waterChangeData, lostArea, builtUpChangeData}) {
   const [viewState, setViewState] = React.useState({
     longitude: 90.50,
     latitude: 23.56,
@@ -21,6 +21,8 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
   });
 
   
+  
+  console.log("Current waterChangeData:", JSON.stringify(waterChangeData, null, 2));
 
   const mapRef = useRef();
 
@@ -67,7 +69,12 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
     if (!waterChangeData || !mapRef.current) return;
     const map = mapRef.current.getMap();
 
-    if (!waterChangeData.features || waterChangeData.features.length === 0) return;
+    // if (!waterChangeData.features || waterChangeData.features.length === 0) return;
+    const datasets = [waterChangeData, builtUpChangeData].filter(
+    d => d && d.features && d.features.length > 0
+  );
+
+  if (datasets.length === 0) return;
 
     // Flatten coordinates for bounding box
     const allCoords = waterChangeData.features.flatMap(feature => {
@@ -90,7 +97,7 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
 
     // Fit map to bounds with some padding
     map.fitBounds([[minLon, minLat], [maxLon, maxLat]], { padding: 50, duration: 1000 });
-  }, [waterChangeData]);
+  }, [waterChangeData, builtUpChangeData]);
 
   
 
@@ -190,6 +197,21 @@ export default function MapPage({ mapStyle, legend, selectedPort, waterChangeDat
             />
           </Source>
           
+        )}
+
+
+        {/* Built-up Change Overlay (Orange) */}
+        {builtUpChangeData && (
+          <Source id="builtup-source" type="geojson" data={builtUpChangeData}>
+            <Layer
+              id="builtup-layer"
+              type="fill"
+              paint={{
+                "fill-color": "rgba(208, 66, 199, 0.44)", 
+                "fill-outline-color": "purple",
+              }}
+            />
+          </Source>
         )}
 
         {/* <Marker longitude={90.5356} latitude={23.5657} /> */}

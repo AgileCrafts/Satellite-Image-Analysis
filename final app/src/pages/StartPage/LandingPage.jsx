@@ -14,6 +14,8 @@ export default function LandingPage() {
   const [waterChangeData, setWaterChangeData] = useState(null);
   const [lostArea, setLostArea] = useState(null);
 
+  const [builtUpChangeData, setBuiltUpChangeData] = useState(null);
+
   const [legend, setLegend] = useState({
   labels: false,
   landmarks: false
@@ -47,6 +49,7 @@ export default function LandingPage() {
     if (!data.error) {
       setWaterChangeData(data.lost_water_geojson);
       setLostArea(data.lost_area_ha);
+      setBuiltUpChangeData(data.new_built_geojson);
     }
   }
 };
@@ -56,6 +59,7 @@ export default function LandingPage() {
     setSelectedPort(port); // keep map centered on port
     setWaterChangeData(null); // reset previous data
     setLostArea(null);
+    setBuiltUpChangeData(null);
     const { pre_date, post_date } = sliderDates;
 
     try {
@@ -69,14 +73,17 @@ export default function LandingPage() {
         console.error(data.error);
         setWaterChangeData(null);
         setLostArea(null);
+        setBuiltUpChangeData(null);
       } else {
         setWaterChangeData(data.lost_water_geojson);
         setLostArea(data.lost_area_ha);
+        setBuiltUpChangeData(data.new_built_geojson);
       }
     } catch (err) {
       console.error("Failed to fetch water change analysis:", err);
       setWaterChangeData(null);
       setLostArea(null);
+      setBuiltUpChangeData(null);
     }
   };
 
@@ -85,7 +92,7 @@ export default function LandingPage() {
 
     <div  className="landing-container">
 
-      <MagPage mapStyle={mapStyle} legend={legend} selectedPort={selectedPort} waterChangeData={waterChangeData} lostArea={lostArea}/>
+      <MagPage mapStyle={mapStyle} legend={legend} selectedPort={selectedPort} waterChangeData={waterChangeData} lostArea={lostArea} builtUpChangeData={builtUpChangeData}/>
 
 
       

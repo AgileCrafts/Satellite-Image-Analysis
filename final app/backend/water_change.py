@@ -4,21 +4,161 @@ import numpy as np
 import rioxarray
 from skimage.filters import threshold_otsu
 from skimage.morphology import remove_small_objects, remove_small_holes
-from shapely.geometry import shape, mapping
+from shapely.geometry import shape, mapping, Polygon, MultiPolygon
 from shapely.ops import unary_union, transform
+from shapely.affinity import translate, scale
 import pyproj
 import json
 from PIL import Image
 import matplotlib.pyplot as plt
 
 import os
-os.environ["PROJ_LIB"] = pyproj.datadir.get_data_dir()
 
 import rasterio
 from rasterio.transform import from_bounds
 from rasterio.warp import transform_geom
 from rasterio import features
 from shapely.ops import unary_union
+
+os.environ["PROJ_LIB"] = pyproj.datadir.get_data_dir()
+
+
+# ---------------- SCALING FUNCTIONS ----------------
+def apply_scale_to_geometry(geometry, lat_scale=1.0, lon_scale=1.0):
+    """
+    Scale a geometry from its center point.
+    
+    Args:
+        geometry: Shapely geometry object
+        lat_scale: Scale factor for latitude (Y axis). >1 = expand, <1 = shrink
+        lon_scale: Scale factor for longitude (X axis). >1 = expand, <1 = shrink
+    
+    Returns:
+        Scaled geometry
+    
+    Examples:
+        lat_scale=1.1 → 10% larger in north-south direction
+        lon_scale=0.95 → 5% smaller in east-west direction
+    """
+    if geometry is None or geometry.is_empty:
+        return geometry
+    
+    # Scale from the centroid of the geometry
+    centroid = geometry.centroid
+    return scale(geometry, xfact=lon_scale, yfact=lat_scale, origin=centroid)
+
+
+# ---------------- OFFSET/SHIFT FUNCTIONS ----------------
+def calculate_offset_from_percentage(geometry, lat_offset_percent=0, lon_offset_percent=0):
+    """
+    Calculate the actual lat/lon offset based on percentage of the geometry's bounding box.
+    
+    Args:
+        geometry: Shapely geometry object
+        lat_offset_percent: Percentage offset in latitude direction (-100 to 100)
+        lon_offset_percent: Percentage offset in longitude direction (-100 to 100)
+    
+    Returns:
+        Tuple of (lon_offset, lat_offset) in degrees
+    """
+    if geometry is None or geometry.is_empty:
+        return 0.0, 0.0
+    
+    minx, miny, maxx, maxy = geometry.bounds
+    width = maxx - minx   # longitude span
+    height = maxy - miny  # latitude span
+    
+    # Calculate offset in degrees based on percentage
+    lon_offset = (lon_offset_percent / 100.0) * width
+    lat_offset = (lat_offset_percent / 100.0) * height
+    
+    return lon_offset, lat_offset
+
+
+def apply_offset_to_geometry(geometry, lon_offset=0.0, lat_offset=0.0):
+    """
+    Apply coordinate offset to a Shapely geometry.
+    
+    Args:
+        geometry: Shapely geometry object
+        lon_offset: Offset in longitude (degrees) - positive moves east
+        lat_offset: Offset in latitude (degrees) - positive moves north
+    
+    Returns:
+        Translated geometry
+    """
+    if geometry is None or geometry.is_empty:
+        return geometry
+    
+    # Use Shapely's translate function (xoff=longitude, yoff=latitude)
+    return translate(geometry, xoff=lon_offset, yoff=lat_offset)
+
+
+def apply_offset_to_geojson(geojson, lon_offset=0.0, lat_offset=0.0, 
+                             lat_offset_percent=None, lon_offset_percent=None):
+    """
+    Apply coordinate offset to GeoJSON features.
+    
+    Args:
+        geojson: GeoJSON dict with features
+        lon_offset: Direct offset in longitude (degrees)
+        lat_offset: Direct offset in latitude (degrees)
+        lat_offset_percent: Percentage offset for latitude (overrides lat_offset if provided)
+        lon_offset_percent: Percentage offset for longitude (overrides lon_offset if provided)
+    
+    Returns:
+        New GeoJSON with offset coordinates
+    """
+    if not geojson or "features" not in geojson or len(geojson["features"]) == 0:
+        return geojson
+    
+    new_features = []
+    
+    for feature in geojson["features"]:
+        if "geometry" not in feature or feature["geometry"] is None:
+            new_features.append(feature)
+            continue
+        
+        geom = shape(feature["geometry"])
+        
+        # Calculate offset from percentage if provided
+        if lat_offset_percent is not None or lon_offset_percent is not None:
+            calc_lon_offset, calc_lat_offset = calculate_offset_from_percentage(
+                geom,
+                lat_offset_percent=lat_offset_percent or 0,
+                lon_offset_percent=lon_offset_percent or 0
+            )
+            final_lon_offset = calc_lon_offset
+            final_lat_offset = calc_lat_offset
+        else:
+            final_lon_offset = lon_offset
+            final_lat_offset = lat_offset
+        
+        # Apply offset
+        shifted_geom = apply_offset_to_geometry(geom, final_lon_offset, final_lat_offset)
+        
+        # Create new feature with shifted geometry
+        new_feature = {
+            "type": "Feature",
+            "geometry": mapping(shifted_geom),
+            "properties": {
+                **feature.get("properties", {}),
+                "offset_applied": {
+                    "lon_offset_deg": final_lon_offset,
+                    "lat_offset_deg": final_lat_offset,
+                    "lat_offset_percent": lat_offset_percent,
+                    "lon_offset_percent": lon_offset_percent
+                }
+            }
+        }
+        new_features.append(new_feature)
+    
+    return {
+        "type": "FeatureCollection",
+        "features": new_features
+    }
+
+
 
 # ---------------- LOAD 5-BAND GEOTIFF ----------------
 def load_s2_tiff_riox(tiff_bytes):
@@ -55,7 +195,10 @@ def create_water_mask(mndwi_image, threshold):
 
 
 # ---------------- FULL CHANGE MAP + GEOJSON + GEOTIFF ----------------
-def analyze_water_change(pre_bytes, post_bytes, output_dir="./"):
+def analyze_water_change(pre_bytes, post_bytes, output_dir="./", 
+                          lat_offset_percent=0, lon_offset_percent=0,
+                          lat_offset=0.0, lon_offset=0.0,
+                          lat_scale=1.0, lon_scale=1.0):
     
     # Load both images
     pre_green, pre_swir1, pre_transform, pre_crs, pre_bounds = load_s2_tiff_riox(pre_bytes)
@@ -208,7 +351,37 @@ def analyze_water_change(pre_bytes, post_bytes, output_dir="./"):
         # Optional: very small simplify (degrees!)
         merged = merged.simplify(0.0001, preserve_topology=True)
 
-        # 🚫 NO transform_geom anymore
+        # Initialize tracking variables
+        applied_lat_offset = 0.0
+        applied_lon_offset = 0.0
+        applied_lat_scale = lat_scale
+        applied_lon_scale = lon_scale
+
+        # STEP 1: Apply SCALING first (to fix size/ratio issues)
+        # If one side aligns but other doesn't, adjust scale
+        if lat_scale != 1.0 or lon_scale != 1.0:
+            merged = apply_scale_to_geometry(merged, lat_scale=lat_scale, lon_scale=lon_scale)
+            print(f"Applied scaling: lat_scale={lat_scale}, lon_scale={lon_scale}")
+
+        # STEP 2: Apply OFFSET (to shift position)
+        # Use percentage-based offset if provided, otherwise use direct offset
+        if lat_offset_percent != 0 or lon_offset_percent != 0:
+            calc_lon_offset, calc_lat_offset = calculate_offset_from_percentage(
+                merged,
+                lat_offset_percent=lat_offset_percent,
+                lon_offset_percent=lon_offset_percent
+            )
+            merged = apply_offset_to_geometry(merged, calc_lon_offset, calc_lat_offset)
+            applied_lat_offset = calc_lat_offset
+            applied_lon_offset = calc_lon_offset
+            print(f"Applied percentage offset: lat={lat_offset_percent}%, lon={lon_offset_percent}%")
+            print(f"   → Actual offset: lat={calc_lat_offset:.6f}°, lon={calc_lon_offset:.6f}°")
+        elif lat_offset != 0 or lon_offset != 0:
+            merged = apply_offset_to_geometry(merged, lon_offset, lat_offset)
+            applied_lat_offset = lat_offset
+            applied_lon_offset = lon_offset
+            print(f"Applied direct offset: lat={lat_offset:.6f}°, lon={lon_offset:.6f}°")
+
         merged_geojson = mapping(merged)
 
 
@@ -217,7 +390,17 @@ def analyze_water_change(pre_bytes, post_bytes, output_dir="./"):
             "features": [{
                 "type": "Feature",
                 "geometry": merged_geojson,
-                "properties": {"change": "lost_water"}
+                "properties": {
+                    "change": "lost_water",
+                    "transform_applied": {
+                        "lat_offset_percent": lat_offset_percent,
+                        "lon_offset_percent": lon_offset_percent,
+                        "lat_offset_deg": applied_lat_offset,
+                        "lon_offset_deg": applied_lon_offset,
+                        "lat_scale": applied_lat_scale,
+                        "lon_scale": applied_lon_scale
+                    }
+                }
             }]
         }
     else:

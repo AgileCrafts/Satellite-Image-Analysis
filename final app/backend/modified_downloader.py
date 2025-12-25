@@ -20,6 +20,7 @@ from rasterio.transform import from_bounds
 
 from pyproj import Geod
 import math
+from pyproj import Proj, transform
 
 # ---------------- CONFIG ----------------
 def load_config(path="config2.json"):
@@ -51,83 +52,130 @@ def parse_iso8601_utc(date_str):
     return datetime.fromisoformat(date_str)
 
 
-def bbox_to_pixels(bbox, resolution=10):
-    geod = Geod(ellps="WGS84")
-    minx, miny, maxx, maxy = bbox
+# def bbox_to_pixels(bbox, resolution=10):
+#     geod = Geod(ellps="WGS84")
+#     minx, miny, maxx, maxy = bbox
 
-    _, _, width_m = geod.inv(
-        minx, (miny + maxy) / 2,
-        maxx, (miny + maxy) / 2
-    )
-    _, _, height_m = geod.inv(
-        (minx + maxx) / 2, miny,
-        (minx + maxx) / 2, maxy
-    )
-
-    return (
-        math.ceil(width_m / resolution),
-        math.ceil(height_m / resolution)
-    )
-
-
-
-def fix_transform(tiff_bytes, bbox, width, height):
-    """
-    Correctly set transform for Mapbox: top-left origin, negative Y pixel size.
-    """
-    minx, miny, maxx, maxy = bbox
+#     # WGS84 to Web Mercator (EPSG:3857)
+#     wgs84 = Proj(init='epsg:4326')  # WGS84
+#     mercator = Proj(init='epsg:3857')  # Web Mercator
     
-    # Calculate pixel sizes
-    pixel_x = (maxx - minx) / width
-    pixel_y = (miny - maxy) / height  # negative because top to bottom
-    
-    # Top-left corner as origin
-    transform = rasterio.Affine(
-        pixel_x, 0.0, minx,
-        0.0, pixel_y, maxy
-    )
-    
-    with MemoryFile(tiff_bytes) as memfile:
-        with memfile.open() as src:
-            profile = src.profile.copy()
-            profile.update({
-                "crs": "EPSG:4326",
-                "transform": transform,
-                "width": width,
-                "height": height
-            })
-            data = src.read()
-            with MemoryFile() as out_mem:
-                with out_mem.open(**profile) as dst:
-                    dst.write(data)
-                return out_mem.getvalue()
+#     # Convert bounding box corners to Web Mercator
+#     minx_merc, miny_merc = transform(wgs84, mercator, minx, miny)
+#     maxx_merc, maxy_merc = transform(wgs84, mercator, maxx, maxy)
+
+#     # Now, calculate the width and height in Web Mercator
+#     width_m = maxx_merc - minx_merc
+#     height_m = maxy_merc - miny_merc
+
+#     return (
+#         math.ceil(width_m / resolution),
+#         math.ceil(height_m / resolution)
+#     )
 
 
-# ---------------- TIFF REPROJECT FIX ----------------
-def reproject_tiff_to_4326(tiff_bytes: bytes) -> bytes:
+
+# def fix_transform(tiff_bytes, bbox, width, height):
+#     """
+#     Correctly set transform for Mapbox: top-left origin, negative Y pixel size.
+#     """
+#     minx, miny, maxx, maxy = bbox
+    
+#     # Calculate pixel sizes
+#     pixel_x = (maxx - minx) / width
+#     pixel_y = (miny - maxy) / height  # negative because top to bottom
+    
+#     # Top-left corner as origin
+#     transform = rasterio.Affine(
+#         pixel_x, 0.0, minx,
+#         0.0, pixel_y, maxy
+#     )
+    
+#     with MemoryFile(tiff_bytes) as memfile:
+#         with memfile.open() as src:
+#             profile = src.profile.copy()
+#             profile.update({
+#                 "crs": "EPSG:4326",
+#                 "transform": transform,
+#                 "width": width,
+#                 "height": height
+#             })
+#             data = src.read()
+#             with MemoryFile() as out_mem:
+#                 with out_mem.open(**profile) as dst:
+#                     dst.write(data)
+#                 return out_mem.getvalue()
+
+
+# # ---------------- TIFF REPROJECT FIX ----------------
+# def reproject_tiff_to_4326(tiff_bytes: bytes) -> bytes:
+#     """
+#     Ensures TIFF is EPSG:4326.
+#     Returns new TIFF bytes.
+#     """
+#     with MemoryFile(tiff_bytes) as memfile:
+#         with memfile.open() as src:
+
+#             if src.crs and src.crs.to_string() == "EPSG:4326":
+#                 return tiff_bytes  # already correct
+
+#             dst_crs = "EPSG:4326"
+#             transform, width, height = calculate_default_transform(
+#                 src.crs, dst_crs, src.width, src.height, *src.bounds
+#             )
+
+#             profile = src.profile.copy()
+#             profile.update({
+#                 "crs": dst_crs,
+#                 "transform": transform,
+#                 "width": width,
+#                 "height": height
+#             })
+
+#             with MemoryFile() as out_mem:
+#                 with out_mem.open(**profile) as dst:
+#                     for i in range(1, src.count + 1):
+#                         reproject(
+#                             source=rasterio.band(src, i),
+#                             destination=rasterio.band(dst, i),
+#                             src_transform=src.transform,
+#                             src_crs=src.crs,
+#                             dst_transform=transform,
+#                             dst_crs=dst_crs,
+#                             resampling=Resampling.nearest
+#                         )
+#                 return out_mem.getvalue()
+
+def reproject_tiff_to_3857(tiff_bytes: bytes, bbox: list) -> bytes:
     """
-    Ensures TIFF is EPSG:4326.
+    Reproject TIFF to EPSG:3857 (Web Mercator) for Mapbox compatibility.
     Returns new TIFF bytes.
     """
+    src_crs = "EPSG:4326"  # Assuming input is 4326 as per your script
+    dst_crs = "EPSG:3857"
+
     with MemoryFile(tiff_bytes) as memfile:
         with memfile.open() as src:
-
-            if src.crs and src.crs.to_string() == "EPSG:4326":
-                return tiff_bytes  # already correct
-
-            dst_crs = "EPSG:4326"
+            # Calculate new transform, width, height for destination CRS
             transform, width, height = calculate_default_transform(
-                src.crs, dst_crs, src.width, src.height, *src.bounds
+                src.crs or src_crs,  # Use src CRS if set, else assume 4326
+                dst_crs,
+                src.width,
+                src.height,
+                *src.bounds  # Unpack original bounds
             )
 
+            # Update profile for output
             profile = src.profile.copy()
             profile.update({
                 "crs": dst_crs,
                 "transform": transform,
                 "width": width,
-                "height": height
+                "height": height,
+                "nodata": src.nodata  # Preserve nodata if set
             })
 
+            # Create output in memory
             with MemoryFile() as out_mem:
                 with out_mem.open(**profile) as dst:
                     for i in range(1, src.count + 1):
@@ -135,12 +183,12 @@ def reproject_tiff_to_4326(tiff_bytes: bytes) -> bytes:
                             source=rasterio.band(src, i),
                             destination=rasterio.band(dst, i),
                             src_transform=src.transform,
-                            src_crs=src.crs,
+                            src_crs=src.crs or src_crs,
                             dst_transform=transform,
                             dst_crs=dst_crs,
-                            resampling=Resampling.nearest
+                            resampling=Resampling.bilinear  # Or nearest for categorical data like SCL
                         )
-                return out_mem.getvalue()
+                return out_mem.read()
 
 # ---------------- SCENE SEARCH (STAC) ----------------
 def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=30):
@@ -248,23 +296,44 @@ def find_closest_scene(target_date, bbox, token_data, cfg, search_window_days=30
     return best_scene
 
 # ---------------- PROCESSING API ----------------
-def process_request(evalscript, bbox, time_interval, width, height, token):
+def process_request(evalscript, bbox, time_interval, token):
     """Call Copernicus Processing API to get TIFF."""
     url = "https://sh.dataspace.copernicus.eu/api/v1/process"
     headers = {"Authorization": f"Bearer {token}"}
 
     payload = {
+        # "input": {
+        #     "bounds": {"bbox": bbox},
+        #     "data": [{
+        #         "type": "sentinel-2-l2a",
+        #         "dataFilter": {"timeRange": {"from": time_interval[0], "to": time_interval[1]}}
+        #     }]
+        # },
+        # "output": {
+        #     "width": width,
+        #     "height": height,
+        #     "responses": [{"identifier": "default", "format": {"type": "image/tiff"}}]
+        # },
         "input": {
-            "bounds": {"bbox": bbox},
+            "bounds": {
+                "bbox": bbox
+            },
             "data": [{
                 "type": "sentinel-2-l2a",
-                "dataFilter": {"timeRange": {"from": time_interval[0], "to": time_interval[1]}}
+                "dataFilter": {
+                    "timeRange": {
+                        "from": time_interval[0],
+                        "to": time_interval[1]
+                    }
+                }
             }]
         },
         "output": {
-            "width": width,
-            "height": height,
-            "responses": [{"identifier": "default", "format": {"type": "image/tiff"}}]
+            "resolution": [10, 10],
+            "responses": [{
+                "identifier": "default",
+                "format": {"type": "image/tiff"}
+            }]
         },
         "evalscript": evalscript
     }
@@ -303,7 +372,7 @@ def download_scene(scene_info, cfg, bbox, token, index, port_id: int, db: Sessio
     
     print(bbox)
     # print("\n\n\n\n\n\n\n\n")
-    width, height = bbox_to_pixels(bbox, resolution=10)
+    # width, height = bbox_to_pixels(bbox, resolution=10)
     # scale_factor = 100000  # try increasing/decreasing this
     
     # xwidth=(bbox[2] - bbox[0])
@@ -317,8 +386,8 @@ def download_scene(scene_info, cfg, bbox, token, index, port_id: int, db: Sessio
     # width = min(1300, width)
     # height = min(int(1300/rratio), height)
     
-    print(width)
-    print(height)
+    # print(width)
+    # print(height)
     # minx, miny, maxx, maxy = bbox
     # center_lat = (miny + maxy) / 2
 
@@ -357,12 +426,15 @@ def download_scene(scene_info, cfg, bbox, token, index, port_id: int, db: Sessio
 
     try:
         # Download
-        ndwi_tiff = process_request(ndwi_evalscript, bbox, time_interval, width, height, token)
-        rgb_tiff = process_request(rgb_evalscript, bbox, time_interval, width, height, token)
+        # ndwi_tiff = process_request(ndwi_evalscript, bbox, time_interval, width, height, token)
+        # rgb_tiff = process_request(rgb_evalscript, bbox, time_interval, width, height, token)
+
+        ndwi_tiff = process_request(ndwi_evalscript, bbox, time_interval, token)
+        rgb_tiff = process_request(rgb_evalscript, bbox, time_interval, token)
 
         # 🔥 FIX: REPROJECT IMMEDIATELY
-        # ndwi_tiff = reproject_tiff_to_4326(ndwi_raw)
-        # rgb_tiff = reproject_tiff_to_4326(rgb_raw)
+        # ndwi_tiff = reproject_tiff_to_3857(ndwi_tiff, bbox)
+        # rgb_tiff = reproject_tiff_to_3857(rgb_tiff, bbox)
         
         # ndwi_tiff = fix_transform(ndwi_tiff, bbox, width, height)
         # rgb_tiff = fix_transform(rgb_tiff, bbox, width, height)
@@ -386,6 +458,7 @@ def download_scene(scene_info, cfg, bbox, token, index, port_id: int, db: Sessio
             ndwi_data=ndwi_tiff,
             rgb_data=rgb_tiff,
             meta_data={
+                "crs": "EPSG:3857",
                 "scene_id": scene_id,
                 "capture_date": date_str,
                 "cloud_cover": cloud_cover,
